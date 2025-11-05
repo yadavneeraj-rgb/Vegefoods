@@ -1,8 +1,3 @@
-<!-- Remove these lines -->
-{{-- @extends('admin.layouts.master')
-@section('title', 'Subcategories - ' . $category->name)
-@section('content') --}}
-
 <div class="row">
     <div class="col-12">
         <div class="page-title-box d-sm-flex align-items-center justify-content-between">
@@ -26,8 +21,8 @@
                         <div class="col-md-8">
                             <div class="form-group mb-3">
                                 <label for="name" class="form-label">Subcategory Name</label>
-                                <input type="text" name="name" id="subcategory_name" class="form-control" 
-                                       placeholder="Enter subcategory name" required>
+                                <input type="text" name="name" id="subcategory_name" class="form-control"
+                                    placeholder="Enter subcategory name" required>
                                 <div class="error-div"><span class="text-danger"></span></div>
                             </div>
                         </div>
@@ -61,7 +56,7 @@
                                 <tr>
                                     <th>ID</th>
                                     <th>Name</th>
-                                   
+
                                     <th>Status</th>
                                     <th>Created At</th>
                                     <th>Actions</th>
@@ -72,7 +67,7 @@
                                     <tr id="subcategory-{{ $subcategory->id }}">
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ $subcategory->name }}</td>
-                                    
+
                                         <td>
                                             <span class="badge bg-{{ $subcategory->status ? 'success' : 'danger' }}">
                                                 {{ $subcategory->status ? 'Active' : 'Inactive' }}
@@ -80,14 +75,13 @@
                                         </td>
                                         <td>{{ $subcategory->created_at->format('M d, Y') }}</td>
                                         <td>
-                                            <button class="btn btn-sm btn-warning edit-category" 
-                                                    data-id="{{ $subcategory->id }}"
-                                                    data-bs-toggle="modal" 
-                                                    data-bs-target="#editCategoryModal">
+                                            <button class="btn btn-sm btn-warning edit-category"
+                                                data-id="{{ $subcategory->id }}" data-bs-toggle="modal"
+                                                data-bs-target="#editCategoryModal">
                                                 <i class="mdi mdi-pencil"></i>
                                             </button>
-                                            <button class="btn btn-sm btn-danger delete-category" 
-                                                    data-id="{{ $subcategory->id }}">
+                                            <button class="btn btn-sm btn-danger delete-category"
+                                                data-id="{{ $subcategory->id }}">
                                                 <i class="mdi mdi-delete"></i>
                                             </button>
                                         </td>
@@ -107,92 +101,89 @@
     </div>
 </div>
 
-<!-- Remove this line -->
-{{-- @endsection --}}
-
 <script>
-$(document).ready(function () {
-    // Subcategory Form Submission
-    $('#subcategoryForm').on('submit', function (e) {
-        e.preventDefault();
-        
-        var formData = $(this).serialize();
-        var submitBtn = $('#submitBtn');
-        
-        submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Adding...');
-        
-        $.ajax({
-            url: $(this).attr('action'),
-            method: 'POST',
-            data: formData,
-            success: function (response) {
-                if (response.success) {
-                    // Show success message
-                    alert('Success: ' + response.message);
-                    
-                    // Clear form
-                    $('#subcategoryForm')[0].reset();
-                    
-                    // Reload the offcanvas content to show new subcategory
-                    reloadSubcategoriesList();
-                } else {
-                    alert('Error: ' + response.message);
-                }
-            },
-            error: function (xhr) {
-                var errors = xhr.responseJSON.errors;
-                if (errors && errors.name) {
-                    $('#subcategoryForm .error-div span').text(errors.name[0]);
-                } else {
-                    alert('An error occurred while creating subcategory.');
-                }
-            },
-            complete: function () {
-                submitBtn.prop('disabled', false).html('<i class="mdi mdi-plus"></i> Add Subcategory');
-            }
-        });
-    });
-    
-    function reloadSubcategoriesList() {
-        // Get the current category ID from the hidden field
-        var categoryId = $('input[name="parent_id"]').val();
-        
-        // Reload the offcanvas content
-        $.ajax({
-            url: '{{ url('subcategories') }}/' + categoryId,
-            method: 'GET',
-            success: function (data) {
-                // Replace the offcanvas body content
-                $('.offcanvas-body').html(data);
-            },
-            error: function () {
-                alert('Error reloading subcategories');
-            }
-        });
-    }
-    
-    // Edit and Delete functionality (you can add similar to your main category script)
-    $(document).on('click', '.edit-category', function () {
-        var categoryId = $(this).data('id');
-        // Your edit logic here
-    });
-    
-    $(document).on('click', '.delete-category', function () {
-        var categoryId = $(this).data('id');
-        if (confirm('Are you sure you want to delete this subcategory?')) {
+    $(document).ready(function () {
+        // Subcategory Form Submission
+        $('#subcategoryForm').on('submit', function (e) {
+            e.preventDefault();
+
+            var formData = $(this).serialize();
+            var submitBtn = $('#submitBtn');
+
+            submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Adding...');
+
             $.ajax({
-                url: '/category/' + categoryId,
-                method: 'DELETE',
+                url: $(this).attr('action'),
+                method: 'POST',
+                data: formData,
                 success: function (response) {
                     if (response.success) {
+                        // Show success message
                         alert('Success: ' + response.message);
+
+                        // Clear form
+                        $('#subcategoryForm')[0].reset();
+
+                        // Reload the offcanvas content to show new subcategory
                         reloadSubcategoriesList();
                     } else {
                         alert('Error: ' + response.message);
                     }
+                },
+                error: function (xhr) {
+                    var errors = xhr.responseJSON.errors;
+                    if (errors && errors.name) {
+                        $('#subcategoryForm .error-div span').text(errors.name[0]);
+                    } else {
+                        alert('An error occurred while creating subcategory.');
+                    }
+                },
+                complete: function () {
+                    submitBtn.prop('disabled', false).html('<i class="mdi mdi-plus"></i> Add Subcategory');
+                }
+            });
+        });
+
+        function reloadSubcategoriesList() {
+            // Get the current category ID from the hidden field
+            var categoryId = $('input[name="parent_id"]').val();
+
+            // Reload the offcanvas content
+            $.ajax({
+                url: '{{ url('subcategories') }}/' + categoryId,
+                method: 'GET',
+                success: function (data) {
+                    // Replace the offcanvas body content
+                    $('.offcanvas-body').html(data);
+                },
+                error: function () {
+                    alert('Error reloading subcategories');
                 }
             });
         }
+
+        // Edit and Delete functionality (you can add similar to your main category script)
+        $(document).on('click', '.edit-category', function () {
+            var categoryId = $(this).data('id');
+            // Your edit logic here
+        });
+
+        $(document).on('click', '.delete-category', function () {
+            var categoryId = $(this).data('id');
+            if (confirm('Are you sure you want to delete this subcategory?')) {
+                $.ajax({
+                    url: '/category/' + categoryId,
+                    method: 'DELETE',
+                    success: function (response) {
+                        if (response.success) {
+                            alert('Success: ' + response.message);
+                            reloadSubcategoriesList();
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    }
+                });
+            }
+        });
     });
-});
 </script>
