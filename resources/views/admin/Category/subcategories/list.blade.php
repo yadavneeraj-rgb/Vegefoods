@@ -1,0 +1,198 @@
+<!-- Remove these lines -->
+{{-- @extends('admin.layouts.master')
+@section('title', 'Subcategories - ' . $category->name)
+@section('content') --}}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+            <h4 class="mb-sm-0">Subcategories of {{ $category->name }}</h4>
+        </div>
+    </div>
+</div>
+
+<!-- Add Subcategory Form -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Add New Subcategory</h5>
+            </div>
+            <div class="card-body">
+                <form id="subcategoryForm" method="POST" action="{{ route('category.store') }}">
+                    @csrf
+                    <input type="hidden" name="parent_id" value="{{ $category->id }}">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group mb-3">
+                                <label for="name" class="form-label">Subcategory Name</label>
+                                <input type="text" name="name" id="subcategory_name" class="form-control" 
+                                       placeholder="Enter subcategory name" required>
+                                <div class="error-div"><span class="text-danger"></span></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label class="form-label">&nbsp;</label>
+                                <button type="submit" class="btn btn-primary w-100" id="submitBtn">
+                                    <i class="mdi mdi-plus"></i> Add
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Subcategories Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Existing Subcategories</h5>
+            </div>
+            <div class="card-body">
+                @if($subcategories->count() > 0)
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped" id="subcategoriesTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                   
+                                    <th>Status</th>
+                                    <th>Created At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($subcategories as $subcategory)
+                                    <tr id="subcategory-{{ $subcategory->id }}">
+                                        <td>{{ $loop->iteration }}</td>
+                                        <td>{{ $subcategory->name }}</td>
+                                    
+                                        <td>
+                                            <span class="badge bg-{{ $subcategory->status ? 'success' : 'danger' }}">
+                                                {{ $subcategory->status ? 'Active' : 'Inactive' }}
+                                            </span>
+                                        </td>
+                                        <td>{{ $subcategory->created_at->format('M d, Y') }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-warning edit-category" 
+                                                    data-id="{{ $subcategory->id }}"
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#editCategoryModal">
+                                                <i class="mdi mdi-pencil"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger delete-category" 
+                                                    data-id="{{ $subcategory->id }}">
+                                                <i class="mdi mdi-delete"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="alert alert-info text-center">
+                        <h5>No subcategories found.</h5>
+                        <p>Use the form above to add subcategories for {{ $category->name }}.</p>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Remove this line -->
+{{-- @endsection --}}
+
+<script>
+$(document).ready(function () {
+    // Subcategory Form Submission
+    $('#subcategoryForm').on('submit', function (e) {
+        e.preventDefault();
+        
+        var formData = $(this).serialize();
+        var submitBtn = $('#submitBtn');
+        
+        submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Adding...');
+        
+        $.ajax({
+            url: $(this).attr('action'),
+            method: 'POST',
+            data: formData,
+            success: function (response) {
+                if (response.success) {
+                    // Show success message
+                    alert('Success: ' + response.message);
+                    
+                    // Clear form
+                    $('#subcategoryForm')[0].reset();
+                    
+                    // Reload the offcanvas content to show new subcategory
+                    reloadSubcategoriesList();
+                } else {
+                    alert('Error: ' + response.message);
+                }
+            },
+            error: function (xhr) {
+                var errors = xhr.responseJSON.errors;
+                if (errors && errors.name) {
+                    $('#subcategoryForm .error-div span').text(errors.name[0]);
+                } else {
+                    alert('An error occurred while creating subcategory.');
+                }
+            },
+            complete: function () {
+                submitBtn.prop('disabled', false).html('<i class="mdi mdi-plus"></i> Add Subcategory');
+            }
+        });
+    });
+    
+    function reloadSubcategoriesList() {
+        // Get the current category ID from the hidden field
+        var categoryId = $('input[name="parent_id"]').val();
+        
+        // Reload the offcanvas content
+        $.ajax({
+            url: '{{ url('subcategories') }}/' + categoryId,
+            method: 'GET',
+            success: function (data) {
+                // Replace the offcanvas body content
+                $('.offcanvas-body').html(data);
+            },
+            error: function () {
+                alert('Error reloading subcategories');
+            }
+        });
+    }
+    
+    // Edit and Delete functionality (you can add similar to your main category script)
+    $(document).on('click', '.edit-category', function () {
+        var categoryId = $(this).data('id');
+        // Your edit logic here
+    });
+    
+    $(document).on('click', '.delete-category', function () {
+        var categoryId = $(this).data('id');
+        if (confirm('Are you sure you want to delete this subcategory?')) {
+            $.ajax({
+                url: '/category/' + categoryId,
+                method: 'DELETE',
+                success: function (response) {
+                    if (response.success) {
+                        alert('Success: ' + response.message);
+                        reloadSubcategoriesList();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                }
+            });
+        }
+    });
+});
+</script>

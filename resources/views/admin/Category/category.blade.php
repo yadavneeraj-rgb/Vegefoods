@@ -2,226 +2,229 @@
 @section('title', 'Neeraj | Categories')
 @section('content')
 
-<div class="row">
-    <div class="col-12">
-        <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-            <h4 class="mb-sm-0">All Categories</h4>
-            <button class="btn btn-primary view-offcanvas" data-url="{{ route('category.create') }}">
-                <i class="mdi mdi-plus"></i> Add New Category
-            </button>
-        </div>
-    </div>
-</div>
-
-<div class="row" id="categories-table-container">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body">
-                @if($categories->count() > 0)
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped" id="categoriesTable">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Name</th>
-                                <th>Slug</th>
-                                <th>Status</th>
-                                <th>Created At</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($categories as $category)
-                            <tr id="category-{{ $category->id }}">
-                                <td>{{ $category->id }}</td>
-                                <td>{{ $category->name }}</td>
-                                <td>{{ $category->slug }}</td>
-                                <td>
-                                    <span class="badge bg-{{ $category->status ? 'success' : 'danger' }}">
-                                        {{ $category->status ? 'Active' : 'Inactive' }}
-                                    </span>
-                                </td>
-                                <td>{{ $category->created_at->format('M d, Y') }}</td>
-                                <td>
-                                    <button class="btn btn-sm btn-warning edit-category" 
-                                            data-id="{{ $category->id }}"
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#editCategoryModal">
-                                        <i class="mdi mdi-pencil"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-danger delete-category" 
-                                            data-id="{{ $category->id }}">
-                                        <i class="mdi mdi-delete"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                @else
-                <div class="alert alert-info text-center">
-                    <h5>No categories found.</h5>
-                    <p>Click the "Add New Category" button to create your first category.</p>
-                </div>
-                @endif
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                <h4 class="mb-sm-0">All Categories</h4>
+                <button class="btn btn-primary view-offcanvas" data-url="{{ route('category.create') }}">
+                    <i class="mdi mdi-plus"></i> Add New Category
+                </button>
             </div>
         </div>
     </div>
-</div>
 
-@include('admin.layouts.offcanvas.offcanvas')
+    <div class="row" id="categories-table-container">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    @if($categories->count() > 0)
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped" id="categoriesTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
 
-<!-- Edit Category Modal -->
-<div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editCategoryModalLabel">Edit Category</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        <th>Status</th>
+                                        <th>Created At</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($categories as $index => $category)
+                                        <tr id="category-{{ $category->id }}">
+                                            <td>{{ $loop->iteration }}</td> <!-- Serial number instead of ID -->
+                                            <td>{{ $category->name }}</td>
+
+                                            <td>
+                                                <span class="badge bg-{{ $category->status ? 'success' : 'danger' }}">
+                                                    {{ $category->status ? 'Active' : 'Inactive' }}
+                                                </span>
+                                            </td>
+                                            <td>{{ $category->created_at->format('M d, Y') }}</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-warning edit-category" data-id="{{ $category->id }}"
+                                                    data-bs-toggle="modal" data-bs-target="#editCategoryModal">
+                                                    <i class="mdi mdi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger delete-category" data-id="{{ $category->id }}">
+                                                    <i class="mdi mdi-delete"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-secondary view-offcanvas"
+                                                    data-url="{{ route('category.subcategories', ['id' => $category->id]) }}">
+                                                    <i class="mdi mdi-plus">Add Sub Categories</i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="alert alert-info text-center">
+                            <h5>No categories found.</h5>
+                            <p>Click the "Add New Category" button to create your first category.</p>
+                        </div>
+                    @endif
+                </div>
             </div>
-            <form id="editCategoryForm" method="POST">
-                @csrf
-                @method('PUT')
-                <input type="hidden" id="edit_category_id" name="id">
-                <div class="modal-body">
-                    <div class="form-group mb-3">
-                        <label for="edit_category_name" class="form-label">Category Name</label>
-                        <input type="text" name="name" id="edit_category_name" class="form-control" placeholder="Enter category name" required>
-                        <div class="error-div"><span class="text-danger"></span></div>
+        </div>
+    </div>
+
+    @include('admin.layouts.offcanvas.offcanvas')
+
+    <!-- Edit Category Modal -->
+    <div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editCategoryModalLabel">Edit Category</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editCategoryForm" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" id="edit_category_id" name="id">
+                    <div class="modal-body">
+                        <div class="form-group mb-3">
+                            <label for="edit_category_name" class="form-label">Category Name</label>
+                            <input type="text" name="name" id="edit_category_name" class="form-control"
+                                placeholder="Enter category name" required>
+                            <div class="error-div"><span class="text-danger"></span></div>
+                        </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary" id="editSubmitBtn">Update Category</button>
-                </div>
-            </form>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary" id="editSubmitBtn">Update Category</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-</div>
 
 @endsection
 
 @push('script')
-<script src="{{ asset('admin-assets/js/offcanvas/offcanvas.js') }}"></script>
-<script>
-$(document).ready(function(){
-    // CSRF token setup
-    $.ajaxSetup({
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
-    });
-
-    // Edit Category - Load data into modal
-    $(document).on('click', '.edit-category', function() {
-        var categoryId = $(this).data('id');
-        
-        // Clear previous errors
-        $('#editCategoryForm .error-div span').text('');
-        
-        // Load category data
-        $.ajax({
-            url: '/category/' + categoryId + '/edit',
-            method: 'GET',
-            success: function(response) {
-                $('#edit_category_id').val(response.id);
-                $('#edit_category_name').val(response.name);
-                $('#editCategoryForm').attr('action', '/category/' + categoryId);
-            },
-            error: function() {
-                showToast('error', 'Error loading category data.');
-            }
-        });
-    });
-
-    // Update Category Form Submission (Modal)
-    $('#editCategoryForm').on('submit', function(e){
-        e.preventDefault();
-        
-        var categoryId = $('#edit_category_id').val();
-        var submitBtn = $('#editSubmitBtn');
-        
-        submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Updating...');
-        
-        $.ajax({
-            url: $(this).attr('action'),
-            method: 'POST',
-            data: $(this).serialize() + '&_method=PUT',
-            success: function(response) {
-                if (response.success) {
-                    showToast('success', response.message);
-                    
-                    // Close modal
-                    $('#editCategoryModal').modal('hide');
-                    
-                    reloadCategoriesTable();
-                } else {
-                    showToast('error', response.message);
-                }
-            },
-            error: function(xhr) {
-                var errors = xhr.responseJSON.errors;
-                if (errors && errors.name) {
-                    $('#editCategoryForm .error-div span').text(errors.name[0]);
-                } else {
-                    showToast('error', 'An error occurred while updating category.');
-                }
-            },
-            complete: function() {
-                submitBtn.prop('disabled', false).html('Update Category');
-            }
-        });
-    });
-
-    // Delete Category
-    $(document).on('click', '.delete-category', function() {
-        var categoryId = $(this).data('id');
-        
-        if (confirm('Are you sure you want to delete this category?')) {
-            $.ajax({
-                url: '/category/' + categoryId,
-                method: 'DELETE',
-                success: function(response) {
-                    if (response.success) {
-                        showToast('success', response.message);
-                        reloadCategoriesTable();
-                    }
-                },
-                error: function() {
-                    showToast('error', 'Error deleting category');
+    <script src="{{ asset('admin-assets/js/offcanvas/offcanvas.js') }}"></script>
+    <script>
+        $(document).ready(function () {
+            // CSRF token setup
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 }
             });
-        }
-    });
 
-    // Reload categories table
-    function reloadCategoriesTable() {
-        $.ajax({
-            url: '{{ route("category") }}',
-            method: 'GET',
-            success: function(data) {
-                $('#categories-table-container').html($(data).find('#categories-table-container').html());
-            },
-            error: function() {
-                showToast('error', 'Error loading categories');
+            // Edit Category - Load data into modal
+            $(document).on('click', '.edit-category', function () {
+                var categoryId = $(this).data('id');
+
+                // Clear previous errors
+                $('#editCategoryForm .error-div span').text('');
+
+                // Load category data
+                $.ajax({
+                    url: '/category/' + categoryId + '/edit',
+                    method: 'GET',
+                    success: function (response) {
+                        $('#edit_category_id').val(response.id);
+                        $('#edit_category_name').val(response.name);
+                        $('#editCategoryForm').attr('action', '/category/' + categoryId);
+                    },
+                    error: function () {
+                        showToast('error', 'Error loading category data.');
+                    }
+                });
+            });
+
+            // Update Category Form Submission (Modal)
+            $('#editCategoryForm').on('submit', function (e) {
+                e.preventDefault();
+
+                var categoryId = $('#edit_category_id').val();
+                var submitBtn = $('#editSubmitBtn');
+
+                submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Updating...');
+
+                $.ajax({
+                    url: $(this).attr('action'),
+                    method: 'POST',
+                    data: $(this).serialize() + '&_method=PUT',
+                    success: function (response) {
+                        if (response.success) {
+                            showToast('success', response.message);
+
+                            // Close modal
+                            $('#editCategoryModal').modal('hide');
+
+                            reloadCategoriesTable();
+                        } else {
+                            showToast('error', response.message);
+                        }
+                    },
+                    error: function (xhr) {
+                        var errors = xhr.responseJSON.errors;
+                        if (errors && errors.name) {
+                            $('#editCategoryForm .error-div span').text(errors.name[0]);
+                        } else {
+                            showToast('error', 'An error occurred while updating category.');
+                        }
+                    },
+                    complete: function () {
+                        submitBtn.prop('disabled', false).html('Update Category');
+                    }
+                });
+            });
+
+            // Delete Category
+            $(document).on('click', '.delete-category', function () {
+                var categoryId = $(this).data('id');
+
+                if (confirm('Are you sure you want to delete this category?')) {
+                    $.ajax({
+                        url: '/category/' + categoryId,
+                        method: 'DELETE',
+                        success: function (response) {
+                            if (response.success) {
+                                showToast('success', response.message);
+                                reloadCategoriesTable();
+                            }
+                        },
+                        error: function () {
+                            showToast('error', 'Error deleting category');
+                        }
+                    });
+                }
+            });
+
+            // Reload categories table
+            function reloadCategoriesTable() {
+                $.ajax({
+                    url: '{{ route("category") }}',
+                    method: 'GET',
+                    success: function (data) {
+                        $('#categories-table-container').html($(data).find('#categories-table-container').html());
+                    },
+                    error: function () {
+                        showToast('error', 'Error loading categories');
+                    }
+                });
             }
+
+            function showToast(type, message) {
+                // Using simple alert for now - you can replace with Toastr or Bootstrap toast
+                if (type === 'success') {
+                    // alert('Success: ' + message);
+                } else {
+                    alert('Error: ' + message);
+                }
+            }
+
+            // Clear form when modal is hidden
+            $('#editCategoryModal').on('hidden.bs.modal', function () {
+                $('#editCategoryForm .error-div span').text('');
+            });
         });
-    }
-
-    function showToast(type, message) {
-        // Using simple alert for now - you can replace with Toastr or Bootstrap toast
-        if (type === 'success') {
-            // alert('Success: ' + message);
-        } else {
-            alert('Error: ' + message);
-        }
-    }
-
-    // Clear form when modal is hidden
-    $('#editCategoryModal').on('hidden.bs.modal', function () {
-        $('#editCategoryForm .error-div span').text('');
-    });
-});
-</script>
+    </script>
 @endpush
