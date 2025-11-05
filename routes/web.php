@@ -34,10 +34,17 @@ Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Protected Admin Routes (Require Authentication)
+
 Route::middleware(['auth'])->group(function () {
     Route::get("/dashboard", [DashboardController::class, 'dashboard'])->name('dashboard');
+    
+    // Category Routes
     Route::get('/category', [CategoryController::class, 'category'])->name('category');
     Route::get('/category/create', [CreateController::class, 'create'])->name('category.create');
-
+    Route::post('/category', [CreateController::class, 'store'])->name('category.store');
+    
+    // Add these new routes for edit/update
+    Route::get('/category/{id}/edit', [CreateController::class, 'edit'])->name('category.edit');
+    Route::put('/category/{id}', [CreateController::class, 'update'])->name('category.update');
+    Route::delete('/category/{id}', [CreateController::class, 'destroy'])->name('category.destroy');
 });
