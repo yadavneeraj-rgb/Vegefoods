@@ -1,6 +1,6 @@
 {{-- admin/product/product.blade.php --}}
 @extends('admin.layouts.master')
-@section('title', 'Neeraj | Products')
+@section('title', 'Products | Neeraj - Ecommerece')
 @section('content')
 
     <div class="row">
@@ -38,18 +38,16 @@
                                             <td>{{ $loop->iteration }}</td>
                                             <td>
                                                 @if($product->image)
-                                                    <img src="{{ asset('storage/' . $product->image) }}" 
-                                                         alt="{{ $product->name }}" 
-                                                         class="img-thumbnail" 
-                                                         style="width: 60px; height: 60px; object-fit: cover;">
+                                                    <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}"
+                                                        class="img-thumbnail" style="width: 60px; height: 60px; object-fit: cover;">
                                                 @else
                                                     <span class="text-muted">No Image</span>
                                                 @endif
                                             </td>
                                             <td>{{ $product->name }}</td>
-                                          
+
                                             <td>{{ Str::limit($product->description, 50) }}</td>
-                                           
+
                                             <td>
                                                 <span class="badge bg-{{ $product->status ? 'success' : 'danger' }}">
                                                     {{ $product->status ? 'Active' : 'Inactive' }}
@@ -160,7 +158,7 @@
                         $('#edit_product_description').val(response.description);
                         $('#edit_product_search_tag').val(response.search_tag);
                         $('#editProductForm').attr('action', '/product/' + productId);
-                        
+
                         // Show current image if exists
                         if (response.image) {
                             $('#current-image-container').html(
