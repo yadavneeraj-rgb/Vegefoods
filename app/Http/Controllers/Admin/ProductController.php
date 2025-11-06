@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ProductController extends Controller
@@ -26,16 +27,25 @@ class ProductController extends Controller
             'name' => 'required|string|max:255|unique:product,name',
             'description' => 'nullable|string',
             'search_tag' => 'nullable|string|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048', // 2MB max
         ]);
 
         try {
-            $product = Product::create([
+            $productData = [
                 'name' => $request->name,
                 'slug' => Str::slug($request->name),
                 'description' => $request->description,
                 'search_tag' => $request->search_tag,
                 'status' => 1,
-            ]);
+            ];
+
+            // Handle image upload
+            if ($request->hasFile('image')) {
+                $imagePath = $request->file('image')->store('products', 'public');
+                $productData['image'] = $imagePath;
+            }
+
+            $product = Product::create($productData);
 
             return response()->json([
                 'success' => true,
@@ -63,16 +73,32 @@ class ProductController extends Controller
             'name' => 'required|string|max:255|unique:product,name,' . $id,
             'description' => 'nullable|string',
             'search_tag' => 'nullable|string|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         try {
             $product = Product::findOrFail($id);
-            $product->update([
+            
+            $updateData = [
                 'name' => $request->name,
                 'slug' => Str::slug($request->name),
                 'description' => $request->description,
                 'search_tag' => $request->search_tag,
-            ]);
+            ];
+
+            // Handle image upload
+            if ($request->hasFile('image')) {
+                // Delete old image if exists
+                if ($product->image) {
+                    Storage::disk('public')->delete($product->image);
+                }
+                
+                // Store new image
+                $imagePath = $request->file('image')->store('products', 'public');
+                $updateData['image'] = $imagePath;
+            }
+
+            $product->update($updateData);
 
             return response()->json([
                 'success' => true,
@@ -92,6 +118,12 @@ class ProductController extends Controller
     {
         try {
             $product = Product::findOrFail($id);
+            
+            // Delete image file if exists
+            if ($product->image) {
+                Storage::disk('public')->delete($product->image);
+            }
+            
             $product->delete();
 
             return response()->json([

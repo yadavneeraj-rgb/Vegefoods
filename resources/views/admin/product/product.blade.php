@@ -1,3 +1,4 @@
+{{-- admin/product/product.blade.php --}}
 @extends('admin.layouts.master')
 @section('title', 'Neeraj | Products')
 @section('content')
@@ -6,7 +7,7 @@
         <div class="col-12">
             <div class="page-title-box d-sm-flex align-items-center justify-content-between">
                 <h4 class="mb-sm-0">All Products</h4>
-                <button class="btn btn-primary view-offcanvas" data-url="{{ route('product.create') }}">
+                <button class="btn btn-primary view-offcanvas" data-size="400px" data-url="{{ route('product.create') }}">
                     <i class="mdi mdi-plus"></i> Add New Product
                 </button>
             </div>
@@ -23,10 +24,9 @@
                                 <thead>
                                     <tr>
                                         <th>ID</th>
+                                        <th>Image</th>
                                         <th>Name</th>
-                                        <th>Slug</th>
                                         <th>Description</th>
-                                        <th>Search Tags</th>
                                         <th>Status</th>
                                         <th>Created At</th>
                                         <th>Actions</th>
@@ -36,10 +36,20 @@
                                     @foreach($products as $product)
                                         <tr id="product-{{ $product->id }}">
                                             <td>{{ $loop->iteration }}</td>
+                                            <td>
+                                                @if($product->image)
+                                                    <img src="{{ asset('storage/' . $product->image) }}" 
+                                                         alt="{{ $product->name }}" 
+                                                         class="img-thumbnail" 
+                                                         style="width: 60px; height: 60px; object-fit: cover;">
+                                                @else
+                                                    <span class="text-muted">No Image</span>
+                                                @endif
+                                            </td>
                                             <td>{{ $product->name }}</td>
-                                            <td>{{ $product->slug }}</td>
+                                          
                                             <td>{{ Str::limit($product->description, 50) }}</td>
-                                            <td>{{ $product->search_tag }}</td>
+                                           
                                             <td>
                                                 <span class="badge bg-{{ $product->status ? 'success' : 'danger' }}">
                                                     {{ $product->status ? 'Active' : 'Inactive' }}
@@ -81,7 +91,7 @@
                     <h5 class="modal-title" id="editProductModalLabel">Edit Product</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form id="editProductForm" method="POST">
+                <form id="editProductForm" method="POST" enctype="multipart/form-data"> {{-- Added enctype --}}
                     @csrf
                     @method('PUT')
                     <input type="hidden" id="edit_product_id" name="id">
@@ -101,6 +111,13 @@
                             <label for="edit_product_search_tag" class="form-label">Search Tags</label>
                             <input type="text" name="search_tag" id="edit_product_search_tag" class="form-control"
                                 placeholder="Enter search tags (comma separated)">
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="edit_product_image" class="form-label">Product Image</label>
+                            <input type="file" name="image" id="edit_product_image" class="form-control" accept="image/*">
+                            <small class="text-muted">Leave empty to keep current image</small>
+                            <div class="mt-2" id="current-image-container"></div>
+                            <div class="error-div"><span class="text-danger" id="edit-image-error"></span></div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -131,6 +148,7 @@
 
                 // Clear previous errors
                 $('#editProductForm .error-div span').text('');
+                $('#edit-image-error').text('');
 
                 // Load product data
                 $.ajax({
@@ -142,6 +160,16 @@
                         $('#edit_product_description').val(response.description);
                         $('#edit_product_search_tag').val(response.search_tag);
                         $('#editProductForm').attr('action', '/product/' + productId);
+                        
+                        // Show current image if exists
+                        if (response.image) {
+                            $('#current-image-container').html(
+                                '<p><strong>Current Image:</strong></p>' +
+                                '<img src="/storage/' + response.image + '" alt="Current image" class="img-thumbnail" style="max-height: 100px;">'
+                            );
+                        } else {
+                            $('#current-image-container').html('<p class="text-muted">No image uploaded</p>');
+                        }
                     },
                     error: function () {
                         showToast('error', 'Error loading product data.');
@@ -158,10 +186,15 @@
 
                 submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Updating...');
 
+                // Create FormData for file upload
+                var formData = new FormData(this);
+
                 $.ajax({
                     url: $(this).attr('action'),
                     method: 'POST',
-                    data: $(this).serialize() + '&_method=PUT',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
                     success: function (response) {
                         if (response.success) {
                             showToast('success', response.message);
@@ -173,8 +206,13 @@
                     },
                     error: function (xhr) {
                         var errors = xhr.responseJSON.errors;
-                        if (errors && errors.name) {
-                            $('#editProductForm .error-div span').text(errors.name[0]);
+                        if (errors) {
+                            if (errors.name) {
+                                $('#editProductForm .error-div span').text(errors.name[0]);
+                            }
+                            if (errors.image) {
+                                $('#edit-image-error').text(errors.image[0]);
+                            }
                         } else {
                             showToast('error', 'An error occurred while updating product.');
                         }
@@ -223,6 +261,7 @@
             function showToast(type, message) {
                 if (type === 'success') {
                     // Success message (you can use Toastr here)
+                    console.log('Success:', message);
                 } else {
                     alert('Error: ' + message);
                 }
@@ -231,6 +270,8 @@
             // Clear form when modal is hidden
             $('#editProductModal').on('hidden.bs.modal', function () {
                 $('#editProductForm .error-div span').text('');
+                $('#edit-image-error').text('');
+                $('#current-image-container').empty();
             });
         });
     </script>

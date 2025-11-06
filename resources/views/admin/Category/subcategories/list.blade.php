@@ -14,11 +14,11 @@
                 <h5 class="card-title">Add New Subcategory</h5>
             </div>
             <div class="card-body">
-                <form id="subcategoryForm" method="POST" action="{{ route('category.store') }}">
+                <form id="subcategoryForm" method="POST" action="{{ route('category.store') }}" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" name="parent_id" value="{{ $category->id }}">
                     <div class="row">
-                        <div class="col-md-8">
+                        <div class="col-md-6">
                             <div class="form-group mb-3">
                                 <label for="name" class="form-label">Subcategory Name</label>
                                 <input type="text" name="name" id="subcategory_name" class="form-control"
@@ -27,6 +27,12 @@
                             </div>
                         </div>
                         <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label for="image" class="form-label">Subcategory Image</label>
+                                <input type="file" name="image" id="image" class="form-control" accept="image/*">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
                             <div class="form-group mb-3">
                                 <label class="form-label">&nbsp;</label>
                                 <button type="submit" class="btn btn-primary w-100" id="submitBtn">
@@ -55,8 +61,8 @@
                             <thead>
                                 <tr>
                                     <th>ID</th>
+                                    <th>Image</th>
                                     <th>Name</th>
-
                                     <th>Status</th>
                                     <th>Created At</th>
                                     <th>Actions</th>
@@ -66,8 +72,17 @@
                                 @foreach($subcategories as $subcategory)
                                     <tr id="subcategory-{{ $subcategory->id }}">
                                         <td>{{ $loop->iteration }}</td>
+                                        <td>
+                                            @if($subcategory->image)
+                                                <img src="{{ asset('storage/' . $subcategory->image) }}" 
+                                                     alt="{{ $subcategory->name }}" 
+                                                     class="img-thumbnail" 
+                                                     style="width: 50px; height: 50px; object-fit: cover;">
+                                            @else
+                                                <span class="text-muted">No Image</span>
+                                            @endif
+                                        </td>
                                         <td>{{ $subcategory->name }}</td>
-
                                         <td>
                                             <span class="badge bg-{{ $subcategory->status ? 'success' : 'danger' }}">
                                                 {{ $subcategory->status ? 'Active' : 'Inactive' }}
@@ -107,15 +122,19 @@
         $('#subcategoryForm').on('submit', function (e) {
             e.preventDefault();
 
-            var formData = $(this).serialize();
             var submitBtn = $('#submitBtn');
 
             submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Adding...');
+
+            // Create FormData for file upload
+            var formData = new FormData(this);
 
             $.ajax({
                 url: $(this).attr('action'),
                 method: 'POST',
                 data: formData,
+                processData: false,
+                contentType: false,
                 success: function (response) {
                     if (response.success) {
                         // Show success message
@@ -139,7 +158,7 @@
                     }
                 },
                 complete: function () {
-                    submitBtn.prop('disabled', false).html('<i class="mdi mdi-plus"></i> Add Subcategory');
+                    submitBtn.prop('disabled', false).html('<i class="mdi mdi-plus"></i> Add');
                 }
             });
         });
@@ -162,10 +181,10 @@
             });
         }
 
-        // Edit and Delete functionality (you can add similar to your main category script)
+        // Edit and Delete functionality
         $(document).on('click', '.edit-category', function () {
             var categoryId = $(this).data('id');
-            // Your edit logic here
+            // Your edit logic here - this will open the main edit modal
         });
 
         $(document).on('click', '.delete-category', function () {

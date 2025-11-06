@@ -16,7 +16,8 @@ class Product extends Model
         'slug',
         'description',
         'search_tag',
-        'status'
+        'status',
+        'image' 
     ];
 
     protected $attributes = [

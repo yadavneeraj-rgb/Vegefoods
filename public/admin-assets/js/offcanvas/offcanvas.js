@@ -2,6 +2,12 @@ $(document).on('click', '.view-offcanvas', function(e){
     e.preventDefault();
 
     var offcanvas = $('#common-offcanvas');
+    var size = $(this).data('size');
+    if (size) {
+        offcanvas.css('width', size);
+    } else {
+        offcanvas.css('width', '');
+    }
     var offcanvasBody = offcanvas.find('.offcanvas-body');
     var url = $(this).data('url');
     var bsOffcanvas = bootstrap.Offcanvas.getInstance(offcanvas[0]) || new bootstrap.Offcanvas(offcanvas[0]);

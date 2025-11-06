@@ -1,5 +1,5 @@
 <!-- Common Offcanvas -->
-<div class="offcanvas offcanvas-end" style="width:500px" tabindex="-1" id="common-offcanvas" aria-labelledby="commonOffcanvasLabel">
+<div class="offcanvas offcanvas-end"  tabindex="-1" id="common-offcanvas" aria-labelledby="commonOffcanvasLabel">
     <div class="offcanvas-header">
         {{-- <h5 class="offcanvas-title" id="commonOffcanvasLabel">Details</h5> --}}
         <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>

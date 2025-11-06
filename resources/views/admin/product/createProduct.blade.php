@@ -1,4 +1,4 @@
-<form id="productForm" action="{{ route('product.store') }}" method="POST">
+<form id="productForm" action="{{ route('product.store') }}" method="POST" enctype="multipart/form-data">
     @csrf
     <div class="form-group mb-3">
         <label for="name">Product Name</label>
@@ -17,6 +17,13 @@
         <input type="text" name="search_tag" id="product_search_tag" class="form-control"
             placeholder="Enter search tags (comma separated)">
         <small class="text-muted">Separate multiple tags with commas</small>
+    </div>
+
+    <div class="form-group mb-3">
+        <label for="image">Product Image</label>
+        <input type="file" class="form-control" id="image" name="image" accept="image/*"> {{-- Fixed: changed form-label to form-control --}}
+        <small class="text-muted">Allowed formats: jpeg, png, jpg, gif, webp. Max size: 2MB</small>
+        <div class="error-div"><span class="text-danger" id="image-error"></span></div>
     </div>
 
     <div class="d-flex justify-content-between">
@@ -42,15 +49,21 @@
 
             // Clear previous errors
             $('#productForm .error-div span').text('');
+            $('#image-error').text('');
 
             // Disable submit button and show loading
             submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
+
+            // Create FormData object to handle file upload
+            var formData = new FormData(this);
 
             // AJAX request
             $.ajax({
                 url: $(this).attr('action'),
                 method: 'POST',
-                data: $(this).serialize(),
+                data: formData,
+                processData: false, // Important for file upload
+                contentType: false, // Important for file upload
                 success: function (response) {
                     if (response.success) {
                         showToast('success', response.message);
@@ -63,8 +76,13 @@
                 },
                 error: function (xhr) {
                     var errors = xhr.responseJSON.errors;
-                    if (errors && errors.name) {
-                        $('#productForm .error-div span').text(errors.name[0]);
+                    if (errors) {
+                        if (errors.name) {
+                            $('#productForm .error-div span').text(errors.name[0]);
+                        }
+                        if (errors.image) {
+                            $('#image-error').text(errors.image[0]);
+                        }
                     } else {
                         showToast('error', 'An error occurred while creating product.');
                     }
@@ -76,8 +94,10 @@
         });
 
         function showToast(type, message) {
+            // Your existing toast function
             if (type === 'success') {
-                // Success message
+                // Success message implementation
+                console.log('Success:', message);
             } else {
                 alert('Error: ' + message);
             }

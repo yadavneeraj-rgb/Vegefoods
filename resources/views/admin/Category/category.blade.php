@@ -6,7 +6,7 @@
         <div class="col-12">
             <div class="page-title-box d-sm-flex align-items-center justify-content-between">
                 <h4 class="mb-sm-0">All Categories</h4>
-                <button class="btn btn-primary view-offcanvas" data-url="{{ route('category.create') }}">
+                <button class="btn btn-primary view-offcanvas" data-size="400px" data-url="{{ route('category.create') }}">
                     <i class="mdi mdi-plus"></i> Add New Category
                 </button>
             </div>
@@ -23,6 +23,7 @@
                                 <thead>
                                     <tr>
                                         <th>ID</th>
+                                        <th>Image</th>
                                         <th>Name</th>
                                         <th>Status</th>
                                         <th>Created At</th>
@@ -33,6 +34,14 @@
                                     @foreach($categories as $index => $category)
                                         <tr id="category-{{ $category->id }}">
                                             <td>{{ $loop->iteration }}</td>
+                                            <td>
+                                                @if($category->image)
+                                                    <img src="{{ asset('storage/' . $category->image) }}" alt="{{ $category->name }}"
+                                                        class="img-thumbnail" style="width: 60px; height: 60px; object-fit: cover;">
+                                                @else
+                                                    <span class="text-muted">No Image</span>
+                                                @endif
+                                            </td>
                                             <td>{{ $category->name }}</td>
                                             <td>
                                                 <span class="badge bg-{{ $category->status ? 'success' : 'danger' }}">
@@ -48,7 +57,7 @@
                                                 <button class="btn btn-sm btn-danger delete-category" data-id="{{ $category->id }}">
                                                     <i class="mdi mdi-delete"></i>
                                                 </button>
-                                                <button class="btn btn-sm btn-secondary view-offcanvas"
+                                                <button class="btn btn-sm btn-secondary view-offcanvas" data-size="700px"
                                                     data-url="{{ route('category.subcategories', ['id' => $category->id]) }}">
                                                     <i class="mdi mdi-plus">Add Sub Categories</i>
                                                 </button>
@@ -80,7 +89,7 @@
                     <h5 class="modal-title" id="editCategoryModalLabel">Edit Category</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form id="editCategoryForm" method="POST">
+                <form id="editCategoryForm" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     <input type="hidden" id="edit_category_id" name="id">
@@ -90,6 +99,13 @@
                             <input type="text" name="name" id="edit_category_name" class="form-control"
                                 placeholder="Enter category name" required>
                             <div class="error-div"><span class="text-danger"></span></div>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="edit_category_image" class="form-label">Category Image</label>
+                            <input type="file" name="image" id="edit_category_image" class="form-control" accept="image/*">
+                            <small class="text-muted">Leave empty to keep current image</small>
+                            <div class="mt-2" id="current-image-container"></div>
+                            <div class="error-div"><span class="text-danger" id="edit-image-error"></span></div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -120,15 +136,26 @@
 
                 // Clear previous errors
                 $('#editCategoryForm .error-div span').text('');
+                $('#edit-image-error').text('');
 
                 // Load category data
                 $.ajax({
                     url: '/category/' + categoryId + '/edit',
                     method: 'GET',
                     success: function (response) {
-                        $('#edit_category_id').val(response.id);
-                        $('#edit_category_name').val(response.name);
+                        $('#edit_category_id').val(response.category.id);
+                        $('#edit_category_name').val(response.category.name);
                         $('#editCategoryForm').attr('action', '/category/' + categoryId);
+
+                        // Show current image if exists
+                        if (response.category.image) {
+                            $('#current-image-container').html(
+                                '<p><strong>Current Image:</strong></p>' +
+                                '<img src="/storage/' + response.category.image + '" alt="Current image" class="img-thumbnail" style="max-height: 100px;">'
+                            );
+                        } else {
+                            $('#current-image-container').html('<p class="text-muted">No image uploaded</p>');
+                        }
                     },
                     error: function () {
                         showToast('error', 'Error loading category data.');
@@ -145,17 +172,19 @@
 
                 submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Updating...');
 
+                // Create FormData for file upload
+                var formData = new FormData(this);
+
                 $.ajax({
                     url: $(this).attr('action'),
                     method: 'POST',
-                    data: $(this).serialize() + '&_method=PUT',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
                     success: function (response) {
                         if (response.success) {
                             showToast('success', response.message);
-
-                            // Close modal
                             $('#editCategoryModal').modal('hide');
-
                             reloadCategoriesTable();
                         } else {
                             showToast('error', response.message);
@@ -163,8 +192,13 @@
                     },
                     error: function (xhr) {
                         var errors = xhr.responseJSON.errors;
-                        if (errors && errors.name) {
-                            $('#editCategoryForm .error-div span').text(errors.name[0]);
+                        if (errors) {
+                            if (errors.name) {
+                                $('#editCategoryForm .error-div span').text(errors.name[0]);
+                            }
+                            if (errors.image) {
+                                $('#edit-image-error').text(errors.image[0]);
+                            }
                         } else {
                             showToast('error', 'An error occurred while updating category.');
                         }
@@ -211,9 +245,9 @@
             }
 
             function showToast(type, message) {
-                // Using simple alert for now - you can replace with Toastr or Bootstrap toast
                 if (type === 'success') {
-                    // alert('Success: ' + message);
+                    // Success message
+                    console.log('Success:', message);
                 } else {
                     alert('Error: ' + message);
                 }
@@ -222,6 +256,8 @@
             // Clear form when modal is hidden
             $('#editCategoryModal').on('hidden.bs.modal', function () {
                 $('#editCategoryForm .error-div span').text('');
+                $('#edit-image-error').text('');
+                $('#current-image-container').empty();
             });
         });
     </script>

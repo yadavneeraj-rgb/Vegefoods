@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class CategoryController extends Controller
@@ -25,16 +26,25 @@ class CategoryController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:categories,name',
-            'parent_id' => 'nullable|exists:categories,id'
+            'parent_id' => 'nullable|exists:categories,id',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048' // Add validation
         ]);
 
         try {
-            $category = Category::create([
+            $categoryData = [
                 'name' => $request->name,
                 'slug' => Str::slug($request->name),
                 'parent_id' => $request->parent_id ?? 0,
                 'status' => 1,
-            ]);
+            ];
+
+            // Handle image upload
+            if ($request->hasFile('image')) {
+                $imagePath = $request->file('image')->store('categories', 'public');
+                $categoryData['image'] = $imagePath;
+            }
+
+            $category = Category::create($categoryData);
 
             return response()->json([
                 'success' => true,
@@ -65,16 +75,32 @@ class CategoryController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:categories,name,' . $id,
-            'parent_id' => 'nullable|exists:categories,id'
+            'parent_id' => 'nullable|exists:categories,id',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048' // Add validation
         ]);
 
         try {
             $category = Category::findOrFail($id);
-            $category->update([
+            
+            $updateData = [
                 'name' => $request->name,
                 'slug' => Str::slug($request->name),
                 'parent_id' => $request->parent_id ?? 0,
-            ]);
+            ];
+
+            // Handle image upload
+            if ($request->hasFile('image')) {
+                // Delete old image if exists
+                if ($category->image) {
+                    Storage::disk('public')->delete($category->image);
+                }
+                
+                // Store new image
+                $imagePath = $request->file('image')->store('categories', 'public');
+                $updateData['image'] = $imagePath;
+            }
+
+            $category->update($updateData);
 
             return response()->json([
                 'success' => true,
@@ -101,6 +127,11 @@ class CategoryController extends Controller
                     'success' => false,
                     'message' => 'Cannot delete category. It has subcategories. Please delete subcategories first.'
                 ], 422);
+            }
+
+            // Delete image file if exists
+            if ($category->image) {
+                Storage::disk('public')->delete($category->image);
             }
 
             $category->delete();
@@ -130,18 +161,27 @@ class CategoryController extends Controller
     public function storeSubcategory(Request $request, $id)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name'
+            'name' => 'required|string|max:255|unique:categories,name',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048' // Add validation for subcategories too
         ]);
 
         try {
             $parentCategory = Category::findOrFail($id);
 
-            $subcategory = Category::create([
+            $subcategoryData = [
                 'name' => $request->name,
                 'slug' => Str::slug($request->name),
                 'parent_id' => $id,
                 'status' => 1,
-            ]);
+            ];
+
+            // Handle image upload for subcategory
+            if ($request->hasFile('image')) {
+                $imagePath = $request->file('image')->store('categories', 'public');
+                $subcategoryData['image'] = $imagePath;
+            }
+
+            $subcategory = Category::create($subcategoryData);
 
             return response()->json([
                 'success' => true,

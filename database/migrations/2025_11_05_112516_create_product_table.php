@@ -18,6 +18,7 @@ return new class extends Migration
             $table->text('description');
             $table->text('search_tag');
             $table->boolean('status')->default(0);
+            $table->string('image')->nullable();
             $table->timestamps();
         });
     }

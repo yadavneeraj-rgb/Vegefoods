@@ -13,7 +13,8 @@ class Category extends Model
         'name',
         'slug',
         'parent_id',
-        'status'
+        'status',
+        'image' // Add this line
     ];
 
     protected $attributes = [
@@ -59,5 +60,16 @@ class Category extends Model
     public function getHasChildrenAttribute()
     {
         return $this->children()->exists();
+    }
+
+    /**
+     * Get the image URL
+     */
+    public function getImageUrlAttribute()
+    {
+        if ($this->image) {
+            return asset('storage/' . $this->image);
+        }
+        return null;
     }
 }
