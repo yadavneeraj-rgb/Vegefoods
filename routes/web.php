@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\AuthController;
+use App\Http\Controllers\Admin\ProductCategoryController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Web\AboutController;
 use App\Http\Controllers\Web\BlogController;
@@ -36,7 +37,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth'])->group(function () {
     Route::get("/dashboard", [DashboardController::class, 'dashboard'])->name('dashboard');
-    
+
     // Category Routes
     Route::get('/category', [CategoryController::class, 'category'])->name('category');
     Route::get('/category/create', [CategoryController::class, 'create'])->name('category.create');
@@ -45,7 +46,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/category/{id}', [CategoryController::class, 'update'])->name('category.update');
     Route::delete('/category/{id}', [CategoryController::class, 'destroy'])->name('category.destroy');
     Route::get('/subcategories/{id}', [CategoryController::class, 'subcategories'])->name('category.subcategories');
-    
+
     // Product Routes
     Route::get('/product', [ProductController::class, 'product'])->name('product');
     Route::get('/product/create', [ProductController::class, 'createProduct'])->name('product.create');
@@ -53,4 +54,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/product/{id}/edit', [ProductController::class, 'editProduct'])->name('product.edit');
     Route::put('/product/{id}', [ProductController::class, 'updateProduct'])->name('product.update');
     Route::delete('/product/{id}', [ProductController::class, 'destroyProduct'])->name('product.destroy');
+
+    //Product Category Routes
+    Route::get('/productCategory', [ProductCategoryController::class, 'productCategory'])->name('productCategory');
+    Route::post('/productCategory/assign', [ProductCategoryController::class, 'assignCategory'])->name('productCategory.assign');
+    Route::get('/product-categories/{productId}', [ProductCategoryController::class, 'getProductCategories'])->name('productCategory.get');
+    Route::delete('/productCategory/{id}', [ProductCategoryController::class, 'removeAssignment'])->name('productCategory.remove');
 });
