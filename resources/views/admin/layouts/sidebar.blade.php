@@ -24,6 +24,13 @@
                         <li><a href="{{ route('category') }}" key="t-tui-calendar">Categories</a></li>
                     </ul>
                 </li>
+
+                <li>
+                    <a href="{{ route("product") }}" class="waves-effect">
+                        <i class="bx bx-package"></i>
+                        <span key="t-chat">Add Products</span>
+                    </a>
+                </li>
             </ul>
         </div>
     </div>

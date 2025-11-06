@@ -24,7 +24,6 @@
                                     <tr>
                                         <th>ID</th>
                                         <th>Name</th>
-
                                         <th>Status</th>
                                         <th>Created At</th>
                                         <th>Actions</th>
@@ -33,9 +32,8 @@
                                 <tbody>
                                     @foreach($categories as $index => $category)
                                         <tr id="category-{{ $category->id }}">
-                                            <td>{{ $loop->iteration }}</td> <!-- Serial number instead of ID -->
+                                            <td>{{ $loop->iteration }}</td>
                                             <td>{{ $category->name }}</td>
-
                                             <td>
                                                 <span class="badge bg-{{ $category->status ? 'success' : 'danger' }}">
                                                     {{ $category->status ? 'Active' : 'Inactive' }}
