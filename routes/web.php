@@ -54,10 +54,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/product/{id}/edit', [ProductController::class, 'editProduct'])->name('product.edit');
     Route::put('/product/{id}', [ProductController::class, 'updateProduct'])->name('product.update');
     Route::delete('/product/{id}', [ProductController::class, 'destroyProduct'])->name('product.destroy');
+    Route::put('/product/{id}/toggle-featured', [ProductController::class, 'toggleFeatured'])->name('product.toggle-featured');
 
     //Product Category Routes
     Route::get('/productCategory', [ProductCategoryController::class, 'productCategory'])->name('productCategory');
     Route::post('/productCategory/assign', [ProductCategoryController::class, 'assignCategory'])->name('productCategory.assign');
     Route::get('/product-categories/{productId}', [ProductCategoryController::class, 'getProductCategories'])->name('productCategory.get');
     Route::delete('/productCategory/{id}', [ProductCategoryController::class, 'removeAssignment'])->name('productCategory.remove');
+
 });

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\ProductPricing;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -12,7 +13,7 @@ class ProductController extends Controller
 {
     public function product()
     {
-        $products = Product::all();
+        $products = Product::with('pricing')->get();
         return view('admin.product.product', compact('products'));
     }
 
@@ -27,7 +28,11 @@ class ProductController extends Controller
             'name' => 'required|string|max:255|unique:product,name',
             'description' => 'nullable|string',
             'search_tag' => 'nullable|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048', // 2MB max
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'mrp_base_price' => 'required|numeric|min:0',
+            'tax_percentage' => 'required|numeric|min:0|max:100',
+            'discount_type' => 'nullable|in:flat,percentage',
+            'discount_value' => 'nullable|numeric|min:0',
         ]);
 
         try {
@@ -37,6 +42,7 @@ class ProductController extends Controller
                 'description' => $request->description,
                 'search_tag' => $request->search_tag,
                 'status' => 1,
+                'is_featured' => $request->is_featured ?? 0,
             ];
 
             // Handle image upload
@@ -45,12 +51,26 @@ class ProductController extends Controller
                 $productData['image'] = $imagePath;
             }
 
+            // Create product
             $product = Product::create($productData);
+
+            // Create pricing
+            $pricingData = [
+                'product_id' => $product->id,
+                'mrp_base_price' => $request->mrp_base_price,
+                'tax_percentage' => $request->tax_percentage,
+                'discount_type' => $request->discount_type,
+                'discount_value' => $request->discount_value ?? 0,
+            ];
+
+            $productPricing = new ProductPricing($pricingData);
+            $productPricing->calculateFinalPrice();
+            $productPricing->save();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Product created successfully!',
-                'product' => $product
+                'product' => $product->load('pricing')
             ]);
 
         } catch (\Exception $e) {
@@ -63,7 +83,7 @@ class ProductController extends Controller
 
     public function editProduct($id)
     {
-        $product = Product::findOrFail($id);
+        $product = Product::with('pricing')->findOrFail($id);
         return response()->json($product);
     }
 
@@ -74,6 +94,10 @@ class ProductController extends Controller
             'description' => 'nullable|string',
             'search_tag' => 'nullable|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'mrp_base_price' => 'required|numeric|min:0',
+            'tax_percentage' => 'required|numeric|min:0|max:100',
+            'discount_type' => 'nullable|in:flat,percentage',
+            'discount_value' => 'nullable|numeric|min:0',
         ]);
 
         try {
@@ -84,6 +108,7 @@ class ProductController extends Controller
                 'slug' => Str::slug($request->name),
                 'description' => $request->description,
                 'search_tag' => $request->search_tag,
+                'is_featured' => $request->is_featured ?? 0,
             ];
 
             // Handle image upload
@@ -100,10 +125,23 @@ class ProductController extends Controller
 
             $product->update($updateData);
 
+            // Update or create pricing
+            $pricingData = [
+                'mrp_base_price' => $request->mrp_base_price,
+                'tax_percentage' => $request->tax_percentage,
+                'discount_type' => $request->discount_type,
+                'discount_value' => $request->discount_value ?? 0,
+            ];
+
+            $productPricing = $product->pricing ?? new ProductPricing(['product_id' => $product->id]);
+            $productPricing->fill($pricingData);
+            $productPricing->calculateFinalPrice();
+            $productPricing->save();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Product updated successfully!',
-                'product' => $product
+                'product' => $product->load('pricing')
             ]);
 
         } catch (\Exception $e) {
@@ -135,6 +173,32 @@ class ProductController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error deleting product: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function toggleFeatured($id)
+    {
+        try {
+            $product = Product::findOrFail($id);
+            
+            // Toggle the featured status
+            $product->update([
+                'is_featured' => !$product->is_featured
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => $product->is_featured 
+                    ? 'Product marked as featured!' 
+                    : 'Product removed from featured!',
+                'is_featured' => $product->is_featured
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating featured status: ' . $e->getMessage()
             ], 500);
         }
     }

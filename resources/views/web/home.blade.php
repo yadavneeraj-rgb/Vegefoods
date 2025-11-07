@@ -1,7 +1,7 @@
 @extends('web.layouts.master')
 @section('title', "Home | Neeraj E-Commerce")
 @section('content')
-	
+
 	<!-- home section -->
 	<section id="home-section" class="hero">
 		<div class="home-slider owl-carousel">
@@ -95,46 +95,65 @@
 			<div class="row">
 				<div class="col-md-8">
 					<div class="row">
+
 						<div class="col-md-6 order-md-last align-items-stretch d-flex">
 							<div class="category-wrap-2 ftco-animate img align-self-stretch d-flex"
 								style="background-image: url('{{ asset('web-assets/images/category.jpg') }}');">
 								<div class="text text-center">
 									<h2>Vegetables</h2>
 									<p>Protect the health of every home</p>
-									<p><a href="#" class="btn btn-primary">Shop now</a></p>
+									<p><a href="{{ route('shop') }}" class="btn btn-primary">Shop now</a></p>
 								</div>
 							</div>
 						</div>
+
 						<div class="col-md-6">
-							<div class="category-wrap ftco-animate img mb-4 d-flex align-items-end"
-								style="background-image: url('{{ asset('web-assets/images/category-1.jpg') }}');">
-								<div class="text px-3 py-1">
-									<h2 class="mb-0"><a href="#">Fruits</a></h2>
+							@if(isset($categories[0]))
+								<div class="category-wrap ftco-animate img mb-4 d-flex align-items-end"
+									style="background-image: url('{{ $categories[0]->image ? asset('storage/' . $categories[0]->image) : asset('web-assets/images/category.jpg') }}');">
+									<div class="text px-3 py-1">
+										<h2 class="mb-0"><a
+												href="{{ url('/shop?category=' . $categories[0]->id) }}">{{ $categories[0]->name }}</a>
+										</h2>
+									</div>
 								</div>
-							</div>
-							<div class="category-wrap ftco-animate img d-flex align-items-end"
-								style="background-image:url('{{ asset('web-assets/images/category-2.jpg') }}');">
-								<div class="text px-3 py-1">
-									<h2 class="mb-0"><a href="#">Vegetables</a></h2>
+							@endif
+							@if(isset($categories[1]))
+								<div class="category-wrap ftco-animate img d-flex align-items-end"
+									style="background-image:url('{{ $categories[1]->image ? asset('storage/' . $categories[1]->image) : asset('web-assets/images/category.jpg')   }}');">
+									<div class="text px-3 py-1">
+										<h2 class="mb-0"><a
+												href="{{ url('/shop?category=' . $categories[1]->id) }}">{{ $categories[1]->name }}</a>
+										</h2>
+									</div>
 								</div>
-							</div>
+							@endif
 						</div>
 					</div>
 				</div>
 
 				<div class="col-md-4">
-					<div class="category-wrap ftco-animate img mb-4 d-flex align-items-end"
-						style="background-image: url('{{ asset('web-assets/images/category-3.jpg') }}');">
-						<div class="text px-3 py-1">
-							<h2 class="mb-0"><a href="#">Juices</a></h2>
+					@if(isset($categories[2]))
+						<div class="category-wrap ftco-animate img mb-4 d-flex align-items-end"
+							style="background-image: url('{{ $categories[2]->image ? asset('storage/' . $categories[1]->image) : asset('web-assets/images/category-3.jpg') }}');">
+							<div class="text px-3 py-1">
+								<h2 class="mb-0"><a
+										href="{{ url('/shop?category=' . $categories[2]->id) }}">{{ $categories[2]->name }}</a>
+								</h2>
+							</div>
 						</div>
-					</div>
-					<div class="category-wrap ftco-animate img d-flex align-items-end"
-						style="background-image: url('{{ asset('web-assets/images/category-4.jpg') }}');">
-						<div class="text px-3 py-1">
-							<h2 class="mb-0"><a href="#">Dried</a></h2>
+					@endif
+
+					@if (isset($categories[3]))
+						<div class="category-wrap ftco-animate img d-flex align-items-end"
+							style="background-image: url('{{ $categories[3]->image ? asset('storage/' . $categories[3]->image) : asset('web-assets/images/category-4.jpg') }}');">
+							<div class="text px-3 py-1">
+								<h2 class="mb-0"><a
+										href="{{ url('/shop?category=' . $categories[3]->id) }}">{{ $categories[3]->name }}</a>
+								</h2>
+							</div>
 						</div>
-					</div>
+					@endif
 				</div>
 			</div>
 		</div>
@@ -152,253 +171,72 @@
 		</div>
 		<div class="container">
 			<div class="row">
-				<div class="col-md-6 col-lg-3 ftco-animate">
-					<div class="product">
-						<a href="#" class="img-prod"><img class="img-fluid"
-								src="{{asset('web-assets/images/product-1.jpg')}}" alt="Colorlib Template">
-							<span class="status">30%</span>
-							<div class="overlay"></div>
-						</a>
-						<div class="text py-3 pb-4 px-3 text-center">
-							<h3><a href="#">Bell Pepper</a></h3>
-							<div class="d-flex">
-								<div class="pricing">
-									<p class="price"><span class="mr-2 price-dc">$120.00</span><span
-											class="price-sale">$80.00</span></p>
+				@forelse($featuredProducts as $product)
+					<div class="col-md-6 col-lg-3 ftco-animate">
+						<div class="product">
+							<a href="#" class="img-prod">
+								<img class="img-fluid"
+									src="{{ $product->image ? asset('storage/' . $product->image) : asset('web-assets/images/product-1.jpg') }}"
+									alt="{{ $product->name }}">
+								@if($product->sale_price && $product->regular_price)
+									@php
+										$discount = (($product->regular_price - $product->sale_price) / $product->regular_price) * 100;
+									@endphp
+									<span class="status">{{ round($discount) }}%</span>
+								@endif
+								<div class="overlay"></div>
+							</a>
+							<div class="text py-3 pb-4 px-3 text-center">
+								<h3><a href="#">{{ $product->name }}</a></h3>
+								<div class="d-flex">
+									<div class="pricing">
+										@if($product->sale_price && $product->regular_price)
+											<p class="price">
+												<span class="mr-2 price-dc">${{ number_format($product->regular_price, 2) }}</span>
+												<span class="price-sale">${{ number_format($product->sale_price, 2) }}</span>
+											</p>
+										@elseif($product->regular_price)
+											<p class="price"><span>${{ number_format($product->regular_price, 2) }}</span></p>
+										@else
+											<p class="price"><span class="text-muted">$</span></p>
+										@endif
+									</div>
 								</div>
-							</div>
-							<div class="bottom-area d-flex px-3">
-								<div class="m-auto d-flex">
-									<a href="#"
-										class="add-to-cart d-flex justify-content-center align-items-center text-center">
-										<span><i class="ion-ios-menu"></i></span>
-									</a>
-									<a href="#" class="buy-now d-flex justify-content-center align-items-center mx-1">
-										<span><i class="ion-ios-cart"></i></span>
-									</a>
-									<a href="#" class="heart d-flex justify-content-center align-items-center ">
-										<span><i class="ion-ios-heart"></i></span>
-									</a>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="col-md-6 col-lg-3 ftco-animate">
-					<div class="product">
-						<a href="#" class="img-prod"><img class="img-fluid"
-								src="{{asset('web-assets/images/product-2.jpg')}}" alt="Colorlib Template">
-							<div class="overlay"></div>
-						</a>
-						<div class="text py-3 pb-4 px-3 text-center">
-							<h3><a href="#">Strawberry</a></h3>
-							<div class="d-flex">
-								<div class="pricing">
-									<p class="price"><span>$120.00</span></p>
-								</div>
-							</div>
-							<div class="bottom-area d-flex px-3">
-								<div class="m-auto d-flex">
-									<a href="#"
-										class="add-to-cart d-flex justify-content-center align-items-center text-center">
-										<span><i class="ion-ios-menu"></i></span>
-									</a>
-									<a href="#" class="buy-now d-flex justify-content-center align-items-center mx-1">
-										<span><i class="ion-ios-cart"></i></span>
-									</a>
-									<a href="#" class="heart d-flex justify-content-center align-items-center ">
-										<span><i class="ion-ios-heart"></i></span>
-									</a>
+								<div class="bottom-area d-flex px-3">
+									<div class="m-auto d-flex">
+										<a href="#"
+											class="add-to-cart d-flex justify-content-center align-items-center text-center">
+											<span><i class="ion-ios-menu"></i></span>
+										</a>
+										<a href="#" class="buy-now d-flex justify-content-center align-items-center mx-1">
+											<span><i class="ion-ios-cart"></i></span>
+										</a>
+										<a href="#" class="heart d-flex justify-content-center align-items-center">
+											<span><i class="ion-ios-heart"></i></span>
+										</a>
+									</div>
 								</div>
 							</div>
 						</div>
 					</div>
-				</div>
-				<div class="col-md-6 col-lg-3 ftco-animate">
-					<div class="product">
-						<a href="#" class="img-prod"><img class="img-fluid"
-								src="{{asset('web-assets/images/product-3.jpg')}}" alt="Colorlib Template">
-							<div class="overlay"></div>
-						</a>
-						<div class="text py-3 pb-4 px-3 text-center">
-							<h3><a href="#">Green Beans</a></h3>
-							<div class="d-flex">
-								<div class="pricing">
-									<p class="price"><span>$120.00</span></p>
-								</div>
-							</div>
-							<div class="bottom-area d-flex px-3">
-								<div class="m-auto d-flex">
-									<a href="#"
-										class="add-to-cart d-flex justify-content-center align-items-center text-center">
-										<span><i class="ion-ios-menu"></i></span>
-									</a>
-									<a href="#" class="buy-now d-flex justify-content-center align-items-center mx-1">
-										<span><i class="ion-ios-cart"></i></span>
-									</a>
-									<a href="#" class="heart d-flex justify-content-center align-items-center ">
-										<span><i class="ion-ios-heart"></i></span>
-									</a>
-								</div>
-							</div>
+				@empty
+					<div class="col-12 text-center">
+						<div class="alert alert-info">
+							<h4>No Featured Products Available</h4>
+							<p>Check back later for our featured products!</p>
 						</div>
 					</div>
-				</div>
-				<div class="col-md-6 col-lg-3 ftco-animate">
-					<div class="product">
-						<a href="#" class="img-prod"><img class="img-fluid"
-								src="{{asset('web-assets/images/product-4.jpg')}}" alt="Colorlib Template">
-							<div class="overlay"></div>
-						</a>
-						<div class="text py-3 pb-4 px-3 text-center">
-							<h3><a href="#">Purple Cabbage</a></h3>
-							<div class="d-flex">
-								<div class="pricing">
-									<p class="price"><span>$120.00</span></p>
-								</div>
-							</div>
-							<div class="bottom-area d-flex px-3">
-								<div class="m-auto d-flex">
-									<a href="#"
-										class="add-to-cart d-flex justify-content-center align-items-center text-center">
-										<span><i class="ion-ios-menu"></i></span>
-									</a>
-									<a href="#" class="buy-now d-flex justify-content-center align-items-center mx-1">
-										<span><i class="ion-ios-cart"></i></span>
-									</a>
-									<a href="#" class="heart d-flex justify-content-center align-items-center ">
-										<span><i class="ion-ios-heart"></i></span>
-									</a>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-
-
-				<div class="col-md-6 col-lg-3 ftco-animate">
-					<div class="product">
-						<a href="#" class="img-prod"><img class="img-fluid"
-								src="{{asset('web-assets/images/product-5.jpg')}}" alt="Colorlib Template">
-							<span class="status">30%</span>
-							<div class="overlay"></div>
-						</a>
-						<div class="text py-3 pb-4 px-3 text-center">
-							<h3><a href="#">Tomatoe</a></h3>
-							<div class="d-flex">
-								<div class="pricing">
-									<p class="price"><span class="mr-2 price-dc">$120.00</span><span
-											class="price-sale">$80.00</span></p>
-								</div>
-							</div>
-							<div class="bottom-area d-flex px-3">
-								<div class="m-auto d-flex">
-									<a href="#"
-										class="add-to-cart d-flex justify-content-center align-items-center text-center">
-										<span><i class="ion-ios-menu"></i></span>
-									</a>
-									<a href="#" class="buy-now d-flex justify-content-center align-items-center mx-1">
-										<span><i class="ion-ios-cart"></i></span>
-									</a>
-									<a href="#" class="heart d-flex justify-content-center align-items-center ">
-										<span><i class="ion-ios-heart"></i></span>
-									</a>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="col-md-6 col-lg-3 ftco-animate">
-					<div class="product">
-						<a href="#" class="img-prod"><img class="img-fluid"
-								src="{{asset('web-assets/images/product-6.jpg')}}" alt="Colorlib Template">
-							<div class="overlay"></div>
-						</a>
-						<div class="text py-3 pb-4 px-3 text-center">
-							<h3><a href="#">Brocolli</a></h3>
-							<div class="d-flex">
-								<div class="pricing">
-									<p class="price"><span>$120.00</span></p>
-								</div>
-							</div>
-							<div class="bottom-area d-flex px-3">
-								<div class="m-auto d-flex">
-									<a href="#"
-										class="add-to-cart d-flex justify-content-center align-items-center text-center">
-										<span><i class="ion-ios-menu"></i></span>
-									</a>
-									<a href="#" class="buy-now d-flex justify-content-center align-items-center mx-1">
-										<span><i class="ion-ios-cart"></i></span>
-									</a>
-									<a href="#" class="heart d-flex justify-content-center align-items-center ">
-										<span><i class="ion-ios-heart"></i></span>
-									</a>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="col-md-6 col-lg-3 ftco-animate">
-					<div class="product">
-						<a href="#" class="img-prod"><img class="img-fluid"
-								src="{{asset('web-assets/images/product-7.jpg')}}" alt="Colorlib Template">
-							<div class="overlay"></div>
-						</a>
-						<div class="text py-3 pb-4 px-3 text-center">
-							<h3><a href="#">Carrots</a></h3>
-							<div class="d-flex">
-								<div class="pricing">
-									<p class="price"><span>$120.00</span></p>
-								</div>
-							</div>
-							<div class="bottom-area d-flex px-3">
-								<div class="m-auto d-flex">
-									<a href="#"
-										class="add-to-cart d-flex justify-content-center align-items-center text-center">
-										<span><i class="ion-ios-menu"></i></span>
-									</a>
-									<a href="#" class="buy-now d-flex justify-content-center align-items-center mx-1">
-										<span><i class="ion-ios-cart"></i></span>
-									</a>
-									<a href="#" class="heart d-flex justify-content-center align-items-center ">
-										<span><i class="ion-ios-heart"></i></span>
-									</a>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="col-md-6 col-lg-3 ftco-animate">
-					<div class="product">
-						<a href="#" class="img-prod"><img class="img-fluid"
-								src="{{asset('web-assets/images/product-8.jpg')}}" alt="Colorlib Template">
-							<div class="overlay"></div>
-						</a>
-						<div class="text py-3 pb-4 px-3 text-center">
-							<h3><a href="#">Fruit Juice</a></h3>
-							<div class="d-flex">
-								<div class="pricing">
-									<p class="price"><span>$120.00</span></p>
-								</div>
-							</div>
-							<div class="bottom-area d-flex px-3">
-								<div class="m-auto d-flex">
-									<a href="#"
-										class="add-to-cart d-flex justify-content-center align-items-center text-center">
-										<span><i class="ion-ios-menu"></i></span>
-									</a>
-									<a href="#" class="buy-now d-flex justify-content-center align-items-center mx-1">
-										<span><i class="ion-ios-cart"></i></span>
-									</a>
-									<a href="#" class="heart d-flex justify-content-center align-items-center ">
-										<span><i class="ion-ios-heart"></i></span>
-									</a>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
+				@endforelse
 			</div>
+
+			{{-- Show "View More" button if there are featured products --}}
+			@if($featuredProducts->count() > 0)
+				<div class="row justify-content-center mt-4">
+					<div class="col-md-12 text-center">
+						<a href="{{ route('shop') }}" class="btn btn-primary">View All Products</a>
+					</div>
+				</div>
+			@endif
 		</div>
 	</section>
 
@@ -485,7 +323,8 @@
 						</div>
 						<div class="item">
 							<div class="testimony-wrap p-4 pb-5">
-								<div class="user-img mb-5" style="background-image:url({{asset('web-assets/images/person_1.jpg')}})">
+								<div class="user-img mb-5"
+									style="background-image:url({{asset('web-assets/images/person_1.jpg')}})">
 									<span class="quote d-flex align-items-center justify-content-center">
 										<i class="icon-quote-left"></i>
 									</span>
@@ -500,7 +339,8 @@
 						</div>
 						<div class="item">
 							<div class="testimony-wrap p-4 pb-5">
-								<div class="user-img mb-5" style="background-image: url({{asset('web-assets/images/person_1.jpg')}})">
+								<div class="user-img mb-5"
+									style="background-image: url({{asset('web-assets/images/person_1.jpg')}})">
 									<span class="quote d-flex align-items-center justify-content-center">
 										<i class="icon-quote-left"></i>
 									</span>

@@ -9,36 +9,31 @@ use Illuminate\Http\Request;
 
 class ShopController extends Controller
 {
-    public function shop()
+    public function shop(Request $request)
     {
-        // Get only main categories (where parent_id = 0)
+        
         $categories = Category::where('parent_id', 0)->where('status', 1)->get();
 
-        // Get all products with their categories
-        $products = Product::with('categories')
-            ->where('status', 1)
-            ->get();
+        $products = Product::with(['categories', 'pricing'])
+            ->where('status', 1);
 
-        // Build category hierarchy for JavaScript filtering
-        $categoryHierarchy = $this->buildCategoryHierarchy();
+        if ($request->has('category') && $request->category != 'all') {
+            $categoryId = $request->category;
 
-        return view('web.shop.shop', compact('categories', 'products', 'categoryHierarchy'));
-    }
-
-    private function buildCategoryHierarchy()
-    {
-        $allCategories = Category::where('status', 1)->get();
-        $hierarchy = [];
-
-        foreach ($allCategories as $category) {
-            $subcategories = Category::where('parent_id', $category->id)
+            $subcategoryIds = Category::where('parent_id', $categoryId)
                 ->where('status', 1)
                 ->pluck('id')
                 ->toArray();
 
-            $hierarchy[$category->id] = $subcategories;
+            $allCategoryIds = array_merge([$categoryId], $subcategoryIds);
+
+            $products->whereHas('categories', function ($query) use ($allCategoryIds) {
+                $query->whereIn('categories.id', $allCategoryIds);
+            });
         }
 
-        return $hierarchy;
+        $products = $products->get();
+
+        return view('web.shop.shop', compact('categories', 'products'));
     }
 }
