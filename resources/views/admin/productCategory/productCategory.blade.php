@@ -80,7 +80,6 @@
                             <tr>
                                 <th>Product Name</th>
                                 <th>Assigned Categories</th>
-                           
                             </tr>
                         </thead>
                         <tbody>
