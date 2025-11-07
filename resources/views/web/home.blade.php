@@ -135,7 +135,7 @@
 				<div class="col-md-4">
 					@if(isset($categories[2]))
 						<div class="category-wrap ftco-animate img mb-4 d-flex align-items-end"
-							style="background-image: url('{{ $categories[2]->image ? asset('storage/' . $categories[1]->image) : asset('web-assets/images/category-3.jpg') }}');">
+							style="background-image: url('{{ $categories[2]->image ? asset('storage/' . $categories[2]->image) : asset('web-assets/images/category-3.jpg') }}');">
 							<div class="text px-3 py-1">
 								<h2 class="mb-0"><a
 										href="{{ url('/shop?category=' . $categories[2]->id) }}">{{ $categories[2]->name }}</a>
@@ -177,41 +177,81 @@
 							<a href="#" class="img-prod">
 								<img class="img-fluid"
 									src="{{ $product->image ? asset('storage/' . $product->image) : asset('web-assets/images/product-1.jpg') }}"
-									alt="{{ $product->name }}">
-								@if($product->sale_price && $product->regular_price)
+									alt="{{ $product->name }}" style="height: 200px; object-fit: cover;">
+
+								{{-- Discount Badge --}}
+								@if($product->hasPricing() && $product->pricing->discount_value > 0)
 									@php
-										$discount = (($product->regular_price - $product->sale_price) / $product->regular_price) * 100;
+										$basePrice = $product->pricing->mrp_base_price;
+										$finalPrice = $product->pricing->final_price;
+										$discountPercentage = (($basePrice - $finalPrice) / $basePrice) * 100;
 									@endphp
-									<span class="status">{{ round($discount) }}%</span>
+									<span class="status">{{ round($discountPercentage) }}% OFF</span>
 								@endif
+
+								@if($product->is_featured)
+									<span class="featured-badge">Featured</span>
+								@endif
+
 								<div class="overlay"></div>
 							</a>
 							<div class="text py-3 pb-4 px-3 text-center">
-								<h3><a href="#">{{ $product->name }}</a></h3>
-								<div class="d-flex">
-									<div class="pricing">
-										@if($product->sale_price && $product->regular_price)
-											<p class="price">
-												<span class="mr-2 price-dc">${{ number_format($product->regular_price, 2) }}</span>
-												<span class="price-sale">${{ number_format($product->sale_price, 2) }}</span>
-											</p>
-										@elseif($product->regular_price)
-											<p class="price"><span>${{ number_format($product->regular_price, 2) }}</span></p>
-										@else
-											<p class="price"><span class="text-muted">$</span></p>
-										@endif
-									</div>
+								<h3><a href="#" class="product-title">{{ Str::limit($product->name, 40) }}</a></h3>
+								<div class="flipkart-style-pricing">
+									@if($product->hasPricing())
+										@php
+											$pricing = $product->pricing;
+											$hasDiscount = $pricing->discount_value > 0;
+											$discountPercentage = $hasDiscount ?
+												round((($pricing->mrp_base_price - $pricing->final_price) / $pricing->mrp_base_price) * 100) : 0;
+										@endphp
+
+										<div class="final-price-flipkart">
+											₹{{ number_format($pricing->final_price, 2) }}
+										</div>
+
+										<div class="price-details">
+											<span class="mrp-flipkart">
+												M.R.P.: <s>₹{{ number_format($pricing->mrp_base_price, 2) }}</s>
+											</span>
+
+											@if($hasDiscount)
+												<span class="discount-flipkart">
+													{{ $discountPercentage }}% off
+												</span>
+											@endif
+										</div>
+									@else
+										<div class="no-price">
+											<span class="text-muted">Price to be announced</span>
+										</div>
+									@endif
 								</div>
+
+								{{-- Product Actions --}}
 								<div class="bottom-area d-flex px-3">
 									<div class="m-auto d-flex">
+										{{-- Quick View --}}
 										<a href="#"
-											class="add-to-cart d-flex justify-content-center align-items-center text-center">
-											<span><i class="ion-ios-menu"></i></span>
+											class="btn btn-sm btn-outline-secondary d-flex justify-content-center align-items-center mx-1"
+											title="Quick View" style="width: 35px; height: 35px;">
+											<span><i class="ion-ios-eye"></i></span>
 										</a>
-										<a href="#" class="buy-now d-flex justify-content-center align-items-center mx-1">
+
+										{{-- Add to Cart --}}
+										<a href="#"
+											class="btn btn-sm btn-primary d-flex justify-content-center align-items-center mx-1 add-to-cart-btn"
+											title="Add to Cart" style="width: 35px; height: 35px;"
+											data-product-id="{{ $product->id }}" data-product-name="{{ $product->name }}"
+											data-product-price="{{ $product->hasPricing() ? $product->pricing->final_price : 0 }}"
+											data-product-image="{{ $product->image ? asset('storage/' . $product->image) : asset('web-assets/images/product-1.jpg') }}">
 											<span><i class="ion-ios-cart"></i></span>
 										</a>
-										<a href="#" class="heart d-flex justify-content-center align-items-center">
+
+										{{-- Wishlist --}}
+										<a href="#"
+											class="btn btn-sm btn-outline-danger d-flex justify-content-center align-items-center mx-1"
+											title="Add to Wishlist" style="width: 35px; height: 35px;">
 											<span><i class="ion-ios-heart"></i></span>
 										</a>
 									</div>

@@ -55,7 +55,7 @@
                             <select class="form-select" id="category_ids" name="category_ids[]" multiple required>
                                 @foreach($categories as $category)
                                     <option value="{{ $category->id }}">
-                                        {{ $category->parent->name }} -> {{ $category->name }}
+                                        {{ $category->parent ? $category->parent->name . ' -> ' : '' }}{{ $category->name }}
                                     </option>
                                 @endforeach
                             </select>
@@ -80,6 +80,7 @@
                             <tr>
                                 <th>Product Name</th>
                                 <th>Assigned Categories</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -93,22 +94,29 @@
                                     </td>
                                     <td>
                                         @foreach($productAssignments as $assignment)
-                                            <span class="badge bg-primary me-1 mb-1">
-                                                {{ $assignment->category->parent->name }} -> 
-                                                {{ $assignment->category->name }}
-                                                <form action="{{ route('productCategory.remove', $assignment->id) }}" 
-                                                      method="POST" class="d-inline" 
-                                                      onsubmit="return confirm('Remove this category assignment?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-link text-white p-0 ms-1">
-                                                        ×
-                                                    </button>
-                                                </form>
-                                            </span>
+                                            @if($assignment->category)
+                                                <span class="badge bg-primary me-1 mb-1">
+                                                    {{ $assignment->category->parent ? $assignment->category->parent->name . ' -> ' : '' }}
+                                                    {{ $assignment->category->name }}
+                                                    <form action="{{ route('productCategory.remove', $assignment->id) }}" 
+                                                          method="POST" class="d-inline" 
+                                                          onsubmit="return confirm('Remove this category assignment?')">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-link text-white p-0 ms-1">
+                                                            ×
+                                                        </button>
+                                                    </form>
+                                                </span>
+                                            @endif
                                         @endforeach
                                     </td>
-                                   
+                                    <td>
+                                        <button class="btn btn-sm btn-warning edit-assignment" 
+                                                data-product-id="{{ $product->id }}">
+                                            <i class="mdi mdi-pencil"></i> Edit
+                                        </button>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -148,6 +156,9 @@
                     type: 'GET',
                     success: function(data) {
                         $('#category_ids').val(data).trigger('change');
+                    },
+                    error: function(xhr) {
+                        console.log('Error loading categories');
                     }
                 });
             } else {

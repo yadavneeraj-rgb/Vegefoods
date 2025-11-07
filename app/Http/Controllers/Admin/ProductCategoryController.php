@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Models\Product;
-use App\Models\Categories;
 use App\Models\ProductCategories;
 
 class ProductCategoryController extends Controller
@@ -14,18 +13,31 @@ class ProductCategoryController extends Controller
     public function productCategory()
     {
         $products = Product::where('status', 1)->get();
+        
         $categories = Category::where('status', 1)
-                              ->where('parent_id', '!=', 0)
-                              ->with('parent')
-                              ->get();
-        
-        $assignedProducts = ProductCategories::with(['product', 'category.parent'])
-                                           ->get()
-                                           ->groupBy('product_id');
-        
+            ->where('parent_id', '!=', 0)
+            ->with('parent')
+            ->get();
+
+        // Get assigned products with safety checks
+        $assignedProducts = ProductCategories::with([
+                'product' => function($query) {
+                    $query->where('status', 1);
+                },
+                'category' => function($query) {
+                    $query->where('status', 1)->with('parent');
+                }
+            ])
+            ->get()
+            ->filter(function($assignment) {
+                // Only include assignments where both product and category exist
+                return $assignment->product && $assignment->category;
+            })
+            ->groupBy('product_id');
+
         return view('admin.productCategory.productCategory', compact(
-            'products', 
-            'categories', 
+            'products',
+            'categories',
             'assignedProducts'
         ));
     }
@@ -55,9 +67,9 @@ class ProductCategoryController extends Controller
     public function getProductCategories($productId)
     {
         $assignedCategories = ProductCategories::where('product_id', $productId)
-                                             ->pluck('category_id')
-                                             ->toArray();
-        
+            ->pluck('category_id')
+            ->toArray();
+
         return response()->json($assignedCategories);
     }
 
