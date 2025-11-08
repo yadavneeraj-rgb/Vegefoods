@@ -10,7 +10,6 @@ use function PHPUnit\Framework\returnArgument;
 
 class ModuleController extends Controller
 {
-    //
 
     public function module()
     {
@@ -23,17 +22,15 @@ class ModuleController extends Controller
         return view('admin.module.edit', compact('module'));
     }
 
-    public function update(Request $request, $id)
+    public function update_module(Request $request, $id)
     {
-
-        dd($request->all());
 
         $request->validate([
             'name' => 'required|max:255',
         ]);
         $module = ShopingModule::find($id);
         $module->update($request->all());
-        return redirect()->route('admin.module.module')
+        return redirect()->route('module')
             ->with('success', 'Post updated successfully.');
     }
 }

@@ -43,7 +43,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/module', [ModuleController::class, 'module'])->name('module');
     Route::get('/module/edit/{id}', [ModuleController::class, 'edit_module'])->name("module.edit");
-    Route::post('/module/{id}', [ModuleController::class, 'update'])->name('module.update');
+    Route::post('/module/{id}', [ModuleController::class, 'update_module'])->name('module.update');
 
 
     // Category Routes
