@@ -49,8 +49,29 @@
 				<li class="nav-item"><a href="{{ route('contact') }}" class="nav-link">Contact</a></li>
 				<li class="nav-item cta cta-colored"><a href="{{ route('cart') }}" class="nav-link"><span
 							class="icon-shopping_cart"></span>[0]</a></li>
-				<li class="nav-item" style="background:"><a href="#" class="nav-link">Login</a></li>
+							
+				@auth
+					<li class="nav-item dropdown">
+						<a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-toggle="dropdown"
+							aria-haspopup="true" aria-expanded="false">
+							👋 {{ Auth::user()->name }}
+						</a>
+						<div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
+							<form method="POST" action="{{ route('user.logout') }}" class="px-3 py-2">
+								@csrf
+								<button type="submit" class="btn btn-danger btn-sm w-100">Logout</button>
+							</form>
+						</div>
+					</li>
+				@else
+					<li class="nav-item">
+						<a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#userAuthModal">Login /
+							Register</a>
+					</li>
+				@endauth
+
 			</ul>
 		</div>
 	</div>
 </nav>
+@include('web.users.auth-modal')

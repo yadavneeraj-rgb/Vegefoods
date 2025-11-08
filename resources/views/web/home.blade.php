@@ -189,10 +189,6 @@
 									<span class="status">{{ round($discountPercentage) }}% OFF</span>
 								@endif
 
-								@if($product->is_featured)
-									<span class="featured-badge">Featured</span>
-								@endif
-
 								<div class="overlay"></div>
 							</a>
 							<div class="text py-3 pb-4 px-3 text-center">

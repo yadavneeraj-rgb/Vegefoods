@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\ShopingModule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -12,28 +13,35 @@ class CategoryController extends Controller
 {
     public function category()
     {
-        $categories = Category::mainCategories()->withCount('children')->get();
+        $categories = Category::mainCategories()
+            ->withCount('children')
+            ->with('module')
+            ->get();
+
         return view('admin.category.category', compact('categories'));
     }
-
     public function create()
     {
         $mainCategories = Category::mainCategories()->get();
-        return view("admin.category.create", compact('mainCategories'));
+        $modules = ShopingModule::all();
+
+        return view("admin.category.create", compact('mainCategories', 'modules'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:categories,name',
+            'module_id' => 'required|exists:shoping_modules,id',
             'parent_id' => 'nullable|exists:categories,id',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048' // Add validation
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048'
         ]);
 
         try {
             $categoryData = [
                 'name' => $request->name,
                 'slug' => Str::slug($request->name),
+                'module_id' => $request->module_id,
                 'parent_id' => $request->parent_id ?? 0,
                 'status' => 1,
             ];
@@ -64,10 +72,12 @@ class CategoryController extends Controller
     {
         $category = Category::findOrFail($id);
         $mainCategories = Category::mainCategories()->where('id', '!=', $id)->get();
+        $modules = ShopingModule::all();
 
         return response()->json([
             'category' => $category,
-            'mainCategories' => $mainCategories
+            'mainCategories' => $mainCategories,
+            'modules' => $modules
         ]);
     }
 
@@ -75,16 +85,18 @@ class CategoryController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:categories,name,' . $id,
+            'module_id' => 'required|exists:shoping_modules,id',
             'parent_id' => 'nullable|exists:categories,id',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048' // Add validation
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048'
         ]);
 
         try {
             $category = Category::findOrFail($id);
-            
+
             $updateData = [
                 'name' => $request->name,
                 'slug' => Str::slug($request->name),
+                'module_id' => $request->module_id,
                 'parent_id' => $request->parent_id ?? 0,
             ];
 
@@ -94,7 +106,7 @@ class CategoryController extends Controller
                 if ($category->image) {
                     Storage::disk('public')->delete($category->image);
                 }
-                
+
                 // Store new image
                 $imagePath = $request->file('image')->store('categories', 'public');
                 $updateData['image'] = $imagePath;
@@ -154,7 +166,6 @@ class CategoryController extends Controller
         $category = Category::with('children')->findOrFail($id);
         $subcategories = $category->children;
 
-        // Return only the HTML content for offcanvas
         return view('admin.category.subcategories.list', compact('category', 'subcategories'));
     }
 
@@ -162,7 +173,8 @@ class CategoryController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:categories,name',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048' // Add validation for subcategories too
+            'module_id' => 'required|exists:shoping_modules,id',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048'
         ]);
 
         try {
@@ -171,6 +183,7 @@ class CategoryController extends Controller
             $subcategoryData = [
                 'name' => $request->name,
                 'slug' => Str::slug($request->name),
+                'module_id' => $request->module_id,
                 'parent_id' => $id,
                 'status' => 1,
             ];

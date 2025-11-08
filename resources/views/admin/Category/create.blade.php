@@ -6,16 +6,17 @@
         <div class="error-div"><span></span></div>
     </div>
 
-    {{-- <div class="form-group mb-3">
-        <label for="parent_id">Parent Category (Optional)</label>
-        <select name="parent_id" id="parent_id" class="form-control">
-            <option value="">Select Parent Category</option>
-            @foreach($mainCategories as $mainCategory)
-            <option value="{{ $mainCategory->id }}">{{ $mainCategory->name }}</option>
+    <!-- Module Selection Dropdown -->
+    <div class="form-group mb-3">
+        <label for="module_id">Select Module</label>
+        <select name="module_id" id="module_id" class="form-control" required>
+            <option value="">-- Select Module --</option>
+            @foreach($modules as $module)
+                <option value="{{ $module->id }}">{{ $module->name }}</option>
             @endforeach
         </select>
+        <div class="error-div"><span></span></div>
     </div>
-    --}}
 
     <div class="form-group mb-3">
         <label for="image">Category Image</label>
@@ -34,14 +35,20 @@
 <script>
     $(document).ready(function () {
         $('#catform').on('submit', function (e) {
-            e.preventDefault(); 
+            e.preventDefault();
 
             var name = $('#category_name').val();
+            var moduleId = $('#module_id').val();
             var submitBtn = $('#submitBtn');
 
             // Basic validation
             if (name.trim() === '') {
-                $('.error-div span').text('Category name is required');
+                $('.error-div span').first().text('Category name is required');
+                return false;
+            }
+
+            if (!moduleId) {
+                $('#module_id').siblings('.error-div').find('span').text('Please select a module');
                 return false;
             }
 
@@ -52,8 +59,13 @@
             // Disable submit button and show loading
             submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Saving...');
 
-            // Create FormData for file upload
+            // Create FormData from the form element - THIS IS THE KEY FIX
             var formData = new FormData(this);
+
+            // Debug: Check what's in FormData
+            for (var pair of formData.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
+            }
 
             // AJAX request
             $.ajax({
@@ -84,11 +96,17 @@
                     var errors = xhr.responseJSON.errors;
                     if (errors) {
                         if (errors.name) {
-                            $('.error-div span').text(errors.name[0]);
+                            $('.error-div span').first().text(errors.name[0]);
+                        }
+                        if (errors.module_id) {
+                            $('#module_id').siblings('.error-div').find('span').text(errors.module_id[0]);
                         }
                         if (errors.image) {
                             $('#image-error').text(errors.image[0]);
                         }
+                        
+                        // Log the errors for debugging
+                        console.log('Validation errors:', errors);
                     } else {
                         showToast('error', 'An error occurred while creating category.');
                     }
@@ -102,8 +120,8 @@
 
         function showToast(type, message) {
             if (type === 'success') {
-                // Success message
-                console.log('Success:', message);
+                // Success message - you can replace with toast library
+                alert('Success: ' + message);
             } else {
                 alert('Error: ' + message);
             }

@@ -1,5 +1,5 @@
 @extends('admin.layouts.master')
-@section('title', 'Categoires | Neeraj - Ecommerece')
+@section('title', 'Categories | Neeraj - Ecommerce')
 @section('content')
 
     <div class="row">
@@ -25,13 +25,14 @@
                                         <th>ID</th>
                                         <th>Image</th>
                                         <th>Name</th>
+                                        <th>Module</th>
                                         <th>Status</th>
                                         <th>Created At</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($categories as $index => $category)
+                                    @foreach($categories as $category)
                                         <tr id="category-{{ $category->id }}">
                                             <td>{{ $loop->iteration }}</td>
                                             <td>
@@ -43,6 +44,13 @@
                                                 @endif
                                             </td>
                                             <td>{{ $category->name }}</td>
+                                            <td>
+                                                @if($category->module_id && $category->module)
+                                                    <span class="badge bg-info">{{ $category->module->name }}</span>
+                                                @else
+                                                    <span class="badge bg-secondary">Not Assigned</span>
+                                                @endif
+                                            </td>
                                             <td>
                                                 <span class="badge bg-{{ $category->status ? 'success' : 'danger' }}">
                                                     {{ $category->status ? 'Active' : 'Inactive' }}
@@ -100,6 +108,17 @@
                                 placeholder="Enter category name" required>
                             <div class="error-div"><span class="text-danger"></span></div>
                         </div>
+
+                        <!-- Module Selection in Edit Modal -->
+                        <div class="form-group mb-3">
+                            <label for="edit_module_id" class="form-label">Select Module</label>
+                            <select name="module_id" id="edit_module_id" class="form-control" required>
+                                <option value="">-- Select Module --</option>
+                                <!-- Modules will be populated dynamically -->
+                            </select>
+                            <div class="error-div"><span class="text-danger"></span></div>
+                        </div>
+
                         <div class="form-group mb-3">
                             <label for="edit_category_image" class="form-label">Category Image</label>
                             <input type="file" name="image" id="edit_category_image" class="form-control" accept="image/*">
@@ -147,6 +166,18 @@
                         $('#edit_category_name').val(response.category.name);
                         $('#editCategoryForm').attr('action', '/category/' + categoryId);
 
+                        // Populate modules dropdown
+                        var modulesDropdown = $('#edit_module_id');
+                        modulesDropdown.empty();
+                        modulesDropdown.append('<option value="">-- Select Module --</option>');
+
+                        if (response.modules && response.modules.length > 0) {
+                            response.modules.forEach(function (module) {
+                                var selected = module.id == response.category.module_id ? 'selected' : '';
+                                modulesDropdown.append('<option value="' + module.id + '" ' + selected + '>' + module.name + '</option>');
+                            });
+                        }
+
                         // Show current image if exists
                         if (response.category.image) {
                             $('#current-image-container').html(
@@ -168,7 +199,14 @@
                 e.preventDefault();
 
                 var categoryId = $('#edit_category_id').val();
+                var moduleId = $('#edit_module_id').val();
                 var submitBtn = $('#editSubmitBtn');
+
+                // Basic validation
+                if (!moduleId) {
+                    $('#edit_module_id').siblings('.error-div').find('span').text('Please select a module');
+                    return false;
+                }
 
                 submitBtn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin"></i> Updating...');
 
@@ -195,6 +233,9 @@
                         if (errors) {
                             if (errors.name) {
                                 $('#editCategoryForm .error-div span').text(errors.name[0]);
+                            }
+                            if (errors.module_id) {
+                                $('#edit_module_id').siblings('.error-div').find('span').text(errors.module_id[0]);
                             }
                             if (errors.image) {
                                 $('#edit-image-error').text(errors.image[0]);
@@ -258,6 +299,7 @@
                 $('#editCategoryForm .error-div span').text('');
                 $('#edit-image-error').text('');
                 $('#current-image-container').empty();
+                $('#edit_module_id').empty().append('<option value="">-- Select Module --</option>');
             });
         });
     </script>

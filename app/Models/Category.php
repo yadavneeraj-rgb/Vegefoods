@@ -12,9 +12,10 @@ class Category extends Model
     protected $fillable = [
         'name',
         'slug',
+        'module_id',
         'parent_id',
         'status',
-        'image' // Add this line
+        'image'
     ];
 
     protected $attributes = [
@@ -38,9 +39,10 @@ class Category extends Model
         return $this->hasMany(Category::class, 'parent_id');
     }
 
-    /**
-     * Scope for main categories (no parent)
-     */
+    public function module()
+    {
+        return $this->belongsTo(ShopingModule::class, 'module_id');
+    }
     public function scopeMainCategories($query)
     {
         return $query->where('parent_id', 0);
@@ -72,4 +74,5 @@ class Category extends Model
         }
         return null;
     }
+
 }
