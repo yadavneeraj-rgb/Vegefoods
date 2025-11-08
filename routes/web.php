@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\ProductCategoryController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\ModuleController;
 use App\Http\Controllers\Web\AboutController;
 use App\Http\Controllers\Web\BlogController;
 use App\Http\Controllers\Web\CartController;
@@ -40,6 +41,11 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware(['auth'])->group(function () {
     Route::get("/dashboard", [DashboardController::class, 'dashboard'])->name('dashboard');
 
+    Route::get('/module', [ModuleController::class, 'module'])->name('module');
+    Route::get('/module/edit/{id}', [ModuleController::class, 'edit_module'])->name("module.edit");
+    Route::post('/module/{id}', [ModuleController::class, 'update'])->name('module.update');
+
+
     // Category Routes
     Route::get('/category', [CategoryController::class, 'category'])->name('category');
     Route::get('/category/create', [CategoryController::class, 'create'])->name('category.create');
@@ -65,7 +71,6 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/productCategory/{id}', [ProductCategoryController::class, 'removeAssignment'])->name('productCategory.remove');
 
 });
-
 
 
 // User Authentication Routes

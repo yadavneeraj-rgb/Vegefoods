@@ -97,6 +97,7 @@
                     <h5 class="modal-title" id="editCategoryModalLabel">Edit Category</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
+
                 <form id="editCategoryForm" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
@@ -132,6 +133,7 @@
                         <button type="submit" class="btn btn-primary" id="editSubmitBtn">Update Category</button>
                     </div>
                 </form>
+
             </div>
         </div>
     </div>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ShopingModule;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -23,6 +24,8 @@ class HomeController extends Controller
             ->take(8)
             ->get();
 
-        return view('web.home', compact('categories', 'featuredProducts'));
+        $modules = ShopingModule::all();
+
+        return view('web.home', compact('categories', 'featuredProducts', 'modules'));
     }
 }

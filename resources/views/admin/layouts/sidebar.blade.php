@@ -16,6 +16,13 @@
                 </li>
 
                 <li>
+                    <a href="{{ route('module') }}" class="waves-effect">
+                        <i class="bx bx-grid-alt"></i>
+                        <span key="t-chat">Modules</span>
+                    </a>
+                </li>
+
+                <li>
                     <a href="javascript: void(0);" class="has-arrow waves-effect">
                         <i class="bx bx-list-ul"></i>
                         <span key="t-dashboards">Manage Categories</span>

@@ -17,6 +17,9 @@
                 <form id="subcategoryForm" method="POST" action="{{ route('category.store') }}" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" name="parent_id" value="{{ $category->id }}">
+                    <!-- Inherit module_id from parent category -->
+                    <input type="hidden" name="module_id" value="{{ $category->module_id }}">
+                    
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group mb-3">
@@ -38,6 +41,23 @@
                                 <button type="submit" class="btn btn-primary w-100" id="submitBtn">
                                     <i class="mdi mdi-plus"></i> Add
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Show module information -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <small>
+                                    <strong>Module:</strong> 
+                                    @if($category->module)
+                                        <span class="badge bg-info">{{ $category->module->name }}</span>
+                                    @else
+                                        <span class="badge bg-secondary">Not Assigned</span>
+                                    @endif
+                                    - Subcategory will automatically inherit this module
+                                </small>
                             </div>
                         </div>
                     </div>
@@ -63,6 +83,7 @@
                                     <th>ID</th>
                                     <th>Image</th>
                                     <th>Name</th>
+                                    <th>Module</th>
                                     <th>Status</th>
                                     <th>Created At</th>
                                     <th>Actions</th>
@@ -83,6 +104,13 @@
                                             @endif
                                         </td>
                                         <td>{{ $subcategory->name }}</td>
+                                        <td>
+                                            @if($subcategory->module_id && $subcategory->module)
+                                                <span class="badge bg-info">{{ $subcategory->module->name }}</span>
+                                            @else
+                                                <span class="badge bg-secondary">Not Assigned</span>
+                                            @endif
+                                        </td>
                                         <td>
                                             <span class="badge bg-{{ $subcategory->status ? 'success' : 'danger' }}">
                                                 {{ $subcategory->status ? 'Active' : 'Inactive' }}
