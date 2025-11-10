@@ -21,10 +21,19 @@
                                     @foreach($modules as $module)
                                         <tr {{ $module->id }}>
                                             <td>{{ $loop->iteration }}</td>
-                                            <td>{{ $module->image ?? 'NA' }}</td>
+                                            <td>
+                                                @if($module->image)
+                                                    <img src="{{ asset('storage/modules/' . $module->image) }}"
+                                                        alt="{{ $module->name }}" width="60" height="60"
+                                                        style="object-fit: cover; border-radius: 5px;">
+                                                @else
+                                                    <span>NA</span>
+                                                @endif
+                                            </td>
                                             <td>{{ $module->name }}</th>
                                             <td>
-                                                <button class="btn btn-sm btn-warning view-offcanvas" data-size="400px" data-url="{{ route('module.edit', ['id' => $module->id]) }}">
+                                                <button class="btn btn-sm btn-warning view-offcanvas" data-size="400px"
+                                                    data-url="{{ route('module.edit', ['id' => $module->id]) }}">
                                                     <i class="mdi mdi-pencil"></i>
                                                 </button>
 

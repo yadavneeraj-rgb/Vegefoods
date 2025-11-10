@@ -11,11 +11,20 @@ class ShopController extends Controller
 {
     public function shop(Request $request)
     {
-        
-        $categories = Category::where('parent_id', 0)->where('status', 1)->get();
+        $catQuery = Category::query();
+        $products = Product::query();
 
-        $products = Product::with(['categories', 'pricing'])
-            ->where('status', 1);
+        $moduleId = session("module_id");
+        // dd($moduleId);
+        if ($moduleId) {
+            $categories = $catQuery->where('parent_id', 0)->where('module_id', $moduleId)->where('status', 1)->get();
+            $pro = $products->whereHas('categories', function ($query) use ($moduleId) {
+                $query->where('module_id', $moduleId)->where('status', 1);
+            })->with('categories')->get();
+
+        } else {
+            $categories = $catQuery::where('parent_id', 0)->where('status', 1)->get();
+        }
 
         if ($request->has('category') && $request->category != 'all') {
             $categoryId = $request->category;

@@ -10,20 +10,34 @@ use Illuminate\Http\Request;
 
 class HomeController extends Controller
 {
-    public function home()
+    public function home(Request $request)
     {
-        $categories = Category::where('parent_id', 0)
-            ->where('status', 1)
-            ->take(4)
-            ->get();
+        $catQuery = Category::query();
+        $productQuery = Product::query();
 
-        // UPDATED: Include pricing relationship
-        $featuredProducts = Product::with('pricing')
-            ->where('is_featured', true)
-            ->where('status', 1)
-            ->take(8)
-            ->get();
+        if (isset($request->moduleId)) {
+           session(['module_id' => $request->moduleId]);
+            
+            $categories = $catQuery->where("module_id", $request->moduleId)->where('parent_id', 0)
+                ->where('status', 1)
+                ->take(4)
+                ->get();
 
+            $featuredProducts = $productQuery->whereHas('categories', function ($q) use ($request) {
+                $q->where('module_id', $request->moduleId);
+            })->with('categories')->get();
+
+        } else {
+            $categories = Category::where('parent_id', 0)
+                ->where('status', 1)
+                ->take(4)
+                ->get();
+            $featuredProducts = Product::with('pricing')
+                ->where('is_featured', true)
+                ->where('status', 1)
+                ->take(8)
+                ->get();
+        }
         $modules = ShopingModule::all();
 
         return view('web.home', compact('categories', 'featuredProducts', 'modules'));

@@ -3,10 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\Web\ShopController;
 use App\Models\ShopingModule;
 use Illuminate\Http\Request;
-use function PHPUnit\Framework\returnArgument;
+use Storage;
 
 class ModuleController extends Controller
 {
@@ -17,20 +16,33 @@ class ModuleController extends Controller
         return view("admin.module.module", compact("modules"));
     }
 
-    public function edit_module($id){
+    public function edit_module($id)
+    {
         $module = ShopingModule::where('id', $id)->first();
         return view('admin.module.edit', compact('module'));
     }
 
     public function update_module(Request $request, $id)
     {
-
         $request->validate([
             'name' => 'required|max:255',
+           'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
-        $module = ShopingModule::find($id);
-        $module->update($request->all());
-        return redirect()->route('module')
-            ->with('success', 'Post updated successfully.');
+
+        $module = ShopingModule::findOrFail($id);
+        $module->name = $request->name;
+
+        if ($request->hasfile('image')) {
+            if ($module->image && Storage::disk('public')->exists('modules/' . $module->image)) {
+                Storage::disk('public')->delete('' . $module->image);
+            }
+            $path = $request->file('image')->store('modules', 'public');
+            $module->image = basename($path);
+        }
+
+        $module->save();
+
+        return redirect()->route('module')->with('success', 'Module updated successfully.');
+
     }
 }

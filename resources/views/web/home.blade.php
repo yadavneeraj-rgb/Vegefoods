@@ -9,13 +9,10 @@
 				<div class="overlay"></div>
 				<div class="container">
 					<div class="row slider-text justify-content-center align-items-center" data-scrollax-parent="true">
-
 						<div class="col-md-12 ftco-animate text-center">
-							<h1 class="mb-2">We serve Fresh Vegestables &amp; Fruits</h1>
-							<h2 class="subheading mb-4">We deliver organic vegetables &amp; fruits</h2>
+							<h1 class="mb-2">We deliver the Latest &amp; Smartest Electronics</h1>
 							<p><a href="#" class="btn btn-primary">View Details</a></p>
 						</div>
-
 					</div>
 				</div>
 			</div>
@@ -26,8 +23,21 @@
 					<div class="row slider-text justify-content-center align-items-center" data-scrollax-parent="true">
 
 						<div class="col-sm-12 ftco-animate text-center">
-							<h1 class="mb-2">100% Fresh &amp; Organic Foods</h1>
-							<h2 class="subheading mb-4">We deliver organic vegetables &amp; fruits</h2>
+							<h1 class="mb-2">We serve Genuine Medicines & Health Products Foods</h1>
+							<p><a href="#" class="btn btn-primary">View Details</a></p>
+						</div>
+
+					</div>
+				</div>
+			</div>
+
+			<div class="slider-item" style="background-image: url('{{ asset('web-assets/images/bg_3.jpg')}}');">
+				<div class="overlay"></div>
+				<div class="container">
+					<div class="row slider-text justify-content-center align-items-center" data-scrollax-parent="true">
+
+						<div class="col-sm-12 ftco-animate text-center">
+							<h1 class="mb-2">100% Fresh & Organic Foods Delivered</h1>
 							<p><a href="#" class="btn btn-primary">View Details</a></p>
 						</div>
 
@@ -40,16 +50,22 @@
 	<!-- cto section -->
 	<section class="ftco-section">
 		<div class="container">
-			<div class="row no-gutters ftco-services">
+			<div class="row no-gutters ftco-services justify-content-center">
 				@foreach ($modules as $module)
 					<div class="col-md-3 text-center d-flex align-self-stretch ftco-animate">
 						<div class="media block-6 services mb-md-0 mb-4">
-							<div class="icon bg-color-2 d-flex justify-content-center align-items-center mb-2">
-								<span class="flaticon-diet"></span>
+							<div class=" d-flex justify-content-center align-items-center mb-2">
+								@if ($module->image)
+									<a href="{{ route('home', ['moduleId' => $module->id]) }}"><img src="{{ asset('storage/modules/' . $module->image) }}" alt="{{ $module->name }}"
+										class="img-fluid mb-4 p-2 shadow-sm rounded"
+										style="max-height: 180px; object-fit: contain;"></a>
+								@else
+									<span>NA</span>
+								@endif
 							</div>
 							<div class="media-body">
 								<h3 class="heading">{{ $module->name ?? 'NA' }}</h3>
-								<span>Product well package</span>
+
 							</div>
 						</div>
 					</div>
@@ -57,6 +73,7 @@
 			</div>
 		</div>
 	</section>
+
 
 	<section class="ftco-section">
 		<div class="container">
@@ -120,8 +137,8 @@
 							<div class="category-wrap-2 ftco-animate img align-self-stretch d-flex"
 								style="background-image: url('{{ asset('web-assets/images/category.jpg') }}');">
 								<div class="text text-center">
-									<h2>Vegetables</h2>
-									<p>Protect the health of every home</p>
+									<h2 style="color:black">DailyKart</h2>
+									<p style="color:black">Protect the health of every home</p>
 									<p><a href="{{ route('shop') }}" class="btn btn-primary">Shop now</a></p>
 								</div>
 							</div>
@@ -296,21 +313,15 @@
 		</div>
 	</section>
 
-	<section class="ftco-section img" style="background-image: url({{asset('web-assets/images/bg_3.jpg')}});">
+	<section class="ftco-section img" style="background-image: url({{asset('web-assets/images/bg_4.jpg')}});">
 		<div class="container">
-			<div class="row justify-content-end">
+			<div class="row justify-content-start">
 				<div class="col-md-6 heading-section ftco-animate deal-of-the-day ftco-animate">
 					<span class="subheading">Best Price For You</span>
 					<h2 class="mb-4">Deal of the day</h2>
-					<p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia</p>
+					<p >Far far away, behind the word mountains, far from the countries Vokalia and Consonantia</p>
 					<h3><a href="#">Spinach</a></h3>
 					<span class="price">$10 <a href="#">now $5 only</a></span>
-					<div id="timer" class="d-flex mt-5">
-						<div class="time" id="days"></div>
-						<div class="time pl-3" id="hours"></div>
-						<div class="time pl-3" id="minutes"></div>
-						<div class="time pl-3" id="seconds"></div>
-					</div>
 				</div>
 			</div>
 		</div>
