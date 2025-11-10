@@ -28,7 +28,6 @@ class Product extends Model
         'is_featured' => 0
     ];
 
-
     protected $casts = [
         'status' => 'boolean',
         'is_featured' => 'boolean'

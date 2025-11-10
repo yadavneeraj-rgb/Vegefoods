@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Controllers\Admin\banner;
+use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\CreateBannerController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\ProductCategoryController;
@@ -39,8 +42,16 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 //Admin Routes
 Route::middleware(['auth'])->group(function () {
+
+
+    //add banner routes
+    Route::get('/banner', [BannerController::class, 'banner'])->name('banner');
+    Route::get('/createBanner', [CreateBannerController::class, 'createBanner'])->name('createBanner');
+
+    //dashboard route
     Route::get("/dashboard", [DashboardController::class, 'dashboard'])->name('dashboard');
 
+    //module routes
     Route::get('/module', [ModuleController::class, 'module'])->name('module');
     Route::get('/module/edit/{id}', [ModuleController::class, 'edit_module'])->name("module.edit");
     Route::post('/module/{id}', [ModuleController::class, 'update_module'])->name('module.update');
@@ -77,3 +88,6 @@ Route::middleware(['auth'])->group(function () {
 Route::post('/user/login', [WebAuthController::class, 'login'])->name('user.login');
 Route::post('/user/register', [WebAuthController::class, 'register'])->name('user.register');
 Route::post('/user/logout', [WebAuthController::class, 'logout'])->name('user.logout');
+
+
+

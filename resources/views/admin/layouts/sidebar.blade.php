@@ -45,6 +45,13 @@
                         <span key="t-chat">Product Category</span>
                     </a>
                 </li>
+
+                <li>
+                    <a href="{{ route("banner") }}" class="waves-effect">
+                        <i class="bx bx-collection"></i>
+                        <span key="t-chat">Add Banner</span>
+                    </a>
+                </li>
             </ul>
         </div>
     </div>
