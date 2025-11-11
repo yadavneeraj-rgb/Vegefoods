@@ -23,7 +23,7 @@ class ShopController extends Controller
             })->with('categories')->get();
 
         } else {
-            $categories = $catQuery::where('parent_id', 0)->where('status', 1)->get();
+            $categories = $catQuery->where('parent_id', 0)->where('status', 1)->get();
         }
 
         if ($request->has('category') && $request->category != 'all') {

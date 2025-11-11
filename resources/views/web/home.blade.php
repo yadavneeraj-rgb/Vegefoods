@@ -56,16 +56,16 @@
 						<div class="media block-6 services mb-md-0 mb-4">
 							<div class=" d-flex justify-content-center align-items-center mb-2">
 								@if ($module->image)
-									<a href="{{ route('home', ['moduleId' => $module->id]) }}"><img src="{{ asset('storage/modules/' . $module->image) }}" alt="{{ $module->name }}"
-										class="img-fluid mb-4 p-2 shadow-sm rounded"
-										style="max-height: 180px; object-fit: contain;"></a>
+									<a href="{{ route('home', ['moduleId' => $module->id]) }}"><img
+											src="{{ asset('storage/modules/' . $module->image) }}" alt="{{ $module->name }}"
+											class="img-fluid mb-4 p-2 shadow-sm rounded"
+											style="max-height: 180px; object-fit: contain;"></a>
 								@else
 									<span>NA</span>
 								@endif
 							</div>
 							<div class="media-body">
 								<h3 class="heading">{{ $module->name ?? 'NA' }}</h3>
-
 							</div>
 						</div>
 					</div>
@@ -271,17 +271,17 @@
 											<span><i class="ion-ios-eye"></i></span>
 										</a>
 
-										{{-- Add to Cart --}}
-										<a href="#"
-											class="btn btn-sm btn-primary d-flex justify-content-center align-items-center mx-1 add-to-cart-btn"
-											title="Add to Cart" style="width: 35px; height: 35px;"
-											data-product-id="{{ $product->id }}" data-product-name="{{ $product->name }}"
-											data-product-price="{{ $product->hasPricing() ? $product->pricing->final_price : 0 }}"
-											data-product-image="{{ $product->image ? asset('storage/' . $product->image) : asset('web-assets/images/product-1.jpg') }}">
-											<span><i class="ion-ios-cart"></i></span>
-										</a>
+										<form action="{{ route('cart.add') }}" method="POST" style="display:inline;">
+											@csrf
+											<input type="hidden" name="product_id" value="{{ $product->id }}">
+											<button type="submit"
+												class="btn btn-sm btn-primary d-flex justify-content-center align-items-center mx-1"
+												title="Add to Cart" style="width: 35px; height: 35px;">
+												<i class="ion-ios-cart"></i>
+											</button>
+										</form>
 
-										{{-- Wishlist --}}
+
 										<a href="#"
 											class="btn btn-sm btn-outline-danger d-flex justify-content-center align-items-center mx-1"
 											title="Add to Wishlist" style="width: 35px; height: 35px;">
@@ -319,7 +319,7 @@
 				<div class="col-md-6 heading-section ftco-animate deal-of-the-day ftco-animate">
 					<span class="subheading">Best Price For You</span>
 					<h2 class="mb-4">Deal of the day</h2>
-					<p >Far far away, behind the word mountains, far from the countries Vokalia and Consonantia</p>
+					<p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia</p>
 					<h3><a href="#">Spinach</a></h3>
 					<span class="price">$10 <a href="#">now $5 only</a></span>
 				</div>

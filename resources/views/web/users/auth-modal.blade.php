@@ -11,10 +11,12 @@
         <!-- Tabs -->
         <ul class="nav nav-tabs" id="authTabs" role="tablist">
           <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#loginTab" type="button" role="tab">Login</button>
+            <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#loginTab" type="button"
+              role="tab">Login</button>
           </li>
           <li class="nav-item" role="presentation">
-            <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#registerTab" type="button" role="tab">Register</button>
+            <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#registerTab" type="button"
+              role="tab">Register</button>
           </li>
         </ul>
 

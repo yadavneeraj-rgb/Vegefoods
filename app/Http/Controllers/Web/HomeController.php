@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\Carts;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ShopingModule;
+use Auth;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -16,8 +18,10 @@ class HomeController extends Controller
         $productQuery = Product::query();
 
         if (isset($request->moduleId)) {
-           session(['module_id' => $request->moduleId]);
-            
+            // session()->forget('module_id');
+            session(['module_id' => $request->moduleId]);
+
+
             $categories = $catQuery->where("module_id", $request->moduleId)->where('parent_id', 0)
                 ->where('status', 1)
                 ->take(4)
@@ -42,4 +46,5 @@ class HomeController extends Controller
 
         return view('web.home', compact('categories', 'featuredProducts', 'modules'));
     }
+
 }

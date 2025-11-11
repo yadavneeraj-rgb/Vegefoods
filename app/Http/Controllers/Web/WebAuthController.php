@@ -18,7 +18,7 @@ class WebAuthController extends Controller
             'password' => ['required'],
         ]);
 
-        if (Auth::attempt($credentials)) {
+        if (Auth::attempt(array_merge($credentials, ['status' => 1]))) {
             $request->session()->regenerate();
             return redirect()->intended('/')->with('success', 'Logged in successfully!');
         }

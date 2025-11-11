@@ -43,7 +43,6 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 //Admin Routes
 Route::middleware(['auth'])->group(function () {
 
-
     //add banner routes
     Route::get('/banner', [BannerController::class, 'banner'])->name('banner');
     Route::get('/createBanner', [CreateBannerController::class, 'createBanner'])->name('createBanner');
@@ -91,3 +90,4 @@ Route::post('/user/logout', [WebAuthController::class, 'logout'])->name('user.lo
 
 
 
+Route::post('/addCart', [CartController::class, 'addToCart'])->name('cart.add');
