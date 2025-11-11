@@ -30,57 +30,54 @@
 								</tr>
 							</thead>
 							<tbody>
-								<tr class="text-center">
-									<td class="product-remove"><a href="#"><span class="ion-ios-close"></span></a></td>
+							<tbody>
+								@forelse($carts as $cart)
+									@php
+										$product = $cart->product;
+										$pricing = $product?->pricing;
+									@endphp
 
-									<td class="image-prod">
-										<div class="img"
-											style="background-image:url({{asset('web-assets/images/product-3.jpg')}});">
-										</div>
-									</td>
+									<tr class="text-center">
+										<td class="product-remove">
+											<a href="#"><span class="ion-ios-close"></span></a>
+										</td>
 
-									<td class="product-name">
-										<h3>Bell Pepper</h3>
-										<p>Far far away, behind the word mountains, far from the countries</p>
-									</td>
+										<td class="image-prod">
+											@if($product->image)
+												<img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}"
+													width="60" height="60" style="object-fit: cover; border-radius: 5px;">
+											@else
+												<span>NA</span>
+											@endif
+										</td>
 
-									<td class="price">$4.90</td>
+										<td class="product-name">
+											<h3>{{ $product->name ?? 'Unknown Product' }}</h3>
+											<p>{{ Str::limit($product->description ?? '', 50) }}</p>
+										</td>
 
-									<td class="quantity">
-										<div class="input-group mb-3">
-											<input type="text" name="quantity" class="quantity form-control input-number"
-												value="1" min="1" max="100">
-										</div>
-									</td>
+										<td class="price">
+											₹{{ number_format($pricing->final_price ?? 0, 2) }}
+										</td>
 
-									<td class="total">$4.90</td>
-								</tr><!-- END TR-->
+										<td class="quantity">
+											<div class="input-group mb-3">
+												<input type="text" name="quantity" class="quantity form-control input-number"
+													value="1" min="1" max="100">
+											</div>
+										</td>
 
-								<tr class="text-center">
-									<td class="product-remove"><a href="#"><span class="ion-ios-close"></span></a></td>
+										<td class="total">
+											₹{{ number_format($pricing->final_price ?? 0, 2) }}
+										</td>
+									</tr>
+								@empty
+									<tr>
+										<td colspan="6" class="text-center">Your cart is empty.</td>
+									</tr>
+								@endforelse
+							</tbody>
 
-									<td class="image-prod">
-										<div class="img"
-											style="background-image:url({{asset('web-assets/images/product-4.jpg')}});">
-										</div>
-									</td>
-
-									<td class="product-name">
-										<h3>Bell Pepper</h3>
-										<p>Far far away, behind the word mountains, far from the countries</p>
-									</td>
-
-									<td class="price">$15.70</td>
-
-									<td class="quantity">
-										<div class="input-group mb-3">
-											<input type="text" name="quantity" class="quantity form-control input-number"
-												value="1" min="1" max="100">
-										</div>
-									</td>
-
-									<td class="total">$15.70</td>
-								</tr><!-- END TR-->
 							</tbody>
 						</table>
 					</div>
@@ -126,23 +123,19 @@
 						<h3>Cart Totals</h3>
 						<p class="d-flex">
 							<span>Subtotal</span>
-							<span>$20.60</span>
+							<span>₹{{ number_format($subtotal, 2) }}</span>
 						</p>
 						<p class="d-flex">
 							<span>Delivery</span>
-							<span>$0.00</span>
-						</p>
-						<p class="d-flex">
-							<span>Discount</span>
-							<span>$3.00</span>
+							<span>₹{{ number_format($delivery, 2) }}</span>
 						</p>
 						<hr>
 						<p class="d-flex total-price">
 							<span>Total</span>
-							<span>$17.60</span>
+							<span>₹{{ number_format($total, 2) }}</span>
 						</p>
 					</div>
-					<p><a href="{{ route("checkout") }}" class="btn btn-primary py-3 px-4">Proceed to Checkout</a></p>
+					<p><a href="{{ route('checkout') }}" class="btn btn-primary py-3 px-4">Proceed to Checkout</a></p>
 				</div>
 			</div>
 		</div>

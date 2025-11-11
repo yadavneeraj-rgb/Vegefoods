@@ -45,11 +45,10 @@
                         <span key="t-chat">Product Category</span>
                     </a>
                 </li>
-
                 <li>
-                    <a href="{{ route("banner") }}" class="waves-effect">
+                    <a href="{{ route("order") }}" class="waves-effect">
                         <i class="bx bx-collection"></i>
-                        <span key="t-chat">Add Banner</span>
+                        <span key="t-chat">Orders</span>
                     </a>
                 </li>
             </ul>

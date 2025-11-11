@@ -90,15 +90,7 @@
 									<input type="text" class="form-control" placeholder="">
 								</div>
 							</div>
-							<div class="w-100"></div>
-							<div class="col-md-12">
-								<div class="form-group mt-4">
-									<div class="radio">
-										<label class="mr-3"><input type="radio" name="optradio"> Create an Account? </label>
-										<label><input type="radio" name="optradio"> Ship to different address</label>
-									</div>
-								</div>
-							</div>
+
 						</div>
 					</form><!-- END -->
 				</div>
@@ -109,59 +101,60 @@
 								<h3 class="billing-heading mb-4">Cart Total</h3>
 								<p class="d-flex">
 									<span>Subtotal</span>
-									<span>$20.60</span>
+									<span>₹{{ number_format($subtotal, 2) }}</span>
 								</p>
 								<p class="d-flex">
 									<span>Delivery</span>
-									<span>$0.00</span>
+									<span>₹{{ number_format($delivery, 2) }}</span>
 								</p>
 								<p class="d-flex">
 									<span>Discount</span>
-									<span>$3.00</span>
+									<span>₹{{ number_format($discount, 2) }}</span>
 								</p>
 								<hr>
 								<p class="d-flex total-price">
 									<span>Total</span>
-									<span>$17.60</span>
+									<span>₹{{ number_format($total, 2) }}</span>
 								</p>
+
 							</div>
 						</div>
 						<div class="col-md-12">
 							<div class="cart-detail p-3 p-md-4">
 								<h3 class="billing-heading mb-4">Payment Method</h3>
+
+								{{-- Only Razorpay --}}
 								<div class="form-group">
 									<div class="col-md-12">
 										<div class="radio">
-											<label><input type="radio" name="optradio" class="mr-2"> Direct Bank
-												Tranfer</label>
+											<label>
+												<input type="radio" name="payment_method" value="razorpay" class="mr-2"
+													checked>
+												Pay securely with Razorpay
+											</label>
 										</div>
 									</div>
 								</div>
-								<div class="form-group">
-									<div class="col-md-12">
-										<div class="radio">
-											<label><input type="radio" name="optradio" class="mr-2"> Check Payment</label>
-										</div>
-									</div>
-								</div>
-								<div class="form-group">
-									<div class="col-md-12">
-										<div class="radio">
-											<label><input type="radio" name="optradio" class="mr-2"> Paypal</label>
-										</div>
-									</div>
-								</div>
+
 								<div class="form-group">
 									<div class="col-md-12">
 										<div class="checkbox">
-											<label><input type="checkbox" value="" class="mr-2"> I have read and accept the
-												terms and conditions</label>
+											<label>
+												<input type="checkbox" id="termsCheck" class="mr-2">
+												I agree to the <a href="#">terms and conditions</a>.
+											</label>
 										</div>
 									</div>
 								</div>
-								<p><a href="#" class="btn btn-primary py-3 px-4">Place an order</a></p>
+
+								<p>
+									<button id="placeOrderBtn" class="btn btn-primary py-3 px-4">
+										Proceed to Pay
+									</button>
+								</p>
 							</div>
 						</div>
+
 					</div>
 				</div> <!-- .col-md-8 -->
 			</div>
@@ -189,3 +182,100 @@
 
 
 @endsection
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('placeOrderBtn').onclick = function (e) {
+        e.preventDefault();
+
+        console.log('Button clicked'); // Debug log
+
+        // Ensure user accepted terms
+        if (!document.getElementById('termsCheck').checked) {
+            alert("⚠️ Please accept the terms & conditions before proceeding.");
+            return;
+        }
+
+        // Proceed with Razorpay
+        const total = "{{ $total }}";
+        console.log('Total:', total); // Debug log
+
+        fetch("{{ route('razorpay.order') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+            },
+            body: JSON.stringify({ total: total })
+        })
+        .then(res => {
+            console.log('Response status:', res.status);
+            if (!res.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return res.json();
+        })
+        .then(data => {
+            console.log('Razorpay data:', data); // Debug log
+            
+            if (!data.order_id) {
+                throw new Error('No order ID received');
+            }
+
+            var options = {
+                "key": data.razorpay_key,
+                "amount": data.amount,
+                "currency": "INR",
+                "name": "Neeraj Ecommerce",
+                "description": "Order Payment",
+                "order_id": data.order_id,
+                "handler": function (response) {
+                    console.log('Payment response:', response); // Debug log
+                    
+                    fetch("{{ route('razorpay.verify') }}", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                        },
+                        body: JSON.stringify(response)
+                    })
+                    .then(res => res.json())
+                    .then(result => {
+                        console.log('Verification result:', result); // Debug log
+                        if (result.success) {
+                            alert("✅ Payment Successful!");
+                        } else {
+                            alert("❌ Payment Verification Failed: " + result.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Verification error:', error);
+                        alert("❌ Verification request failed");
+                    });
+                },
+                "prefill": {
+                    "name": data.name,
+                    "email": data.email,
+                    "contact": data.contact
+                },
+                "theme": {
+                    "color": "#007bff"
+                },
+                "modal": {
+                    "ondismiss": function() {
+                        console.log('Payment modal closed');
+                    }
+                }
+            };
+            
+            var rzp = new Razorpay(options);
+            rzp.open();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("❌ Error creating order: " + error.message);
+        });
+    };
+});
+</script>

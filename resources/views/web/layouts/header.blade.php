@@ -1,5 +1,5 @@
 @php
-	$cartCount = auth()->user()->cartItems->count();
+    $cartCount = auth()->check() ? auth()->user()->cartItems->count() : 0;
 @endphp
 
 <div class="py-1 bg-primary">

@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CreateBannerController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\AuthController;
+use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\ProductCategoryController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ModuleController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\Web\CheckoutController;
 use App\Http\Controllers\Web\ContactController;
 use App\Http\Controllers\Web\HomeController;
 use App\Http\Controllers\Web\ProductSingle;
+use App\Http\Controllers\Web\RazorpayController;
 use App\Http\Controllers\Web\ShopController;
 use App\Http\Controllers\Web\WebAuthController;
 use App\Http\Controllers\Web\WhislistController;
@@ -80,6 +82,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/product-categories/{productId}', [ProductCategoryController::class, 'getProductCategories'])->name('productCategory.get');
     Route::delete('/productCategory/{id}', [ProductCategoryController::class, 'removeAssignment'])->name('productCategory.remove');
 
+    //ORDER
+    Route::get('/order', [OrderController::class, 'order'])->name('order');
+
+
 });
 
 
@@ -91,3 +97,8 @@ Route::post('/user/logout', [WebAuthController::class, 'logout'])->name('user.lo
 
 
 Route::post('/addCart', [CartController::class, 'addToCart'])->name('cart.add');
+
+
+
+Route::post('/razorpay/order', [RazorpayController::class, 'createOrder'])->name('razorpay.order');
+Route::post('/razorpay/verify', [RazorpayController::class, 'verifyPayment'])->name('razorpay.verify');
