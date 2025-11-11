@@ -1,3 +1,7 @@
+@php
+	$cartCount = auth()->user()->cartItems->count();
+@endphp
+
 <div class="py-1 bg-primary">
 	<div class="container">
 		<div class="row no-gutters d-flex align-items-start align-items-center px-md-0">
@@ -24,7 +28,7 @@
 
 <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light" id="ftco-navbar">
 	<div class="container">
-		<a class="navbar-brand" href="/" style="color:#669bbc" >DailyKart</a>
+		<a class="navbar-brand" href="/" style="color:#669bbc">DailyKart</a>
 		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav"
 			aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
 			<span class="oi oi-menu"></span> Menu
@@ -47,9 +51,9 @@
 				<li class="nav-item"><a href="{{ route("about") }}" class="nav-link">About</a></li>
 				<li class="nav-item"><a href="{{ route("blog") }}" class="nav-link">Blog</a></li>
 				<li class="nav-item"><a href="{{ route('contact') }}" class="nav-link">Contact</a></li>
-				<li class="nav-item cta cta-colored" ><a href="{{ route('cart') }}" class="nav-link"><span
-							class="icon-shopping_cart"></span>[0]</a></li>
-							
+				<li class="nav-item cta cta-colored"><a href="{{ route('cart') }}" class="nav-link"><span
+							class="icon-shopping_cart"></span>[{{ $cartCount ?? 0 }}]</a></li>
+
 				@auth
 					<li class="nav-item dropdown">
 						<a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-toggle="dropdown"

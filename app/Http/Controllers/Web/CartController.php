@@ -12,6 +12,7 @@ class CartController extends Controller
 {
     public function cart()
     {
+        // dd(Auth::user());
         return view("web.cart.cart");
     }
 

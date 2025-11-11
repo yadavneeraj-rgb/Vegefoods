@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-
+Use Illuminate\Support\Facades\Auth;
 class AppServiceProvider extends ServiceProvider
 {
     /**
