@@ -48,12 +48,18 @@ class CartController extends Controller
 
         return back()->with('success', 'Product added to cart!');
     }
-
     public function remove($id)
     {
-        $cart = Carts::findOrFail($id);
-        $cart->delete();
+        $cartItem = Carts::find($id);
 
-        return back()->with('success', 'Item removed from cart.');
+        if ($cartItem && $cartItem->user_id === Auth::id()) {
+            $cartItem->delete();
+            return back()->with('success', 'Item removed from cart!');
+        }
+
+        return back()->with('error', 'Unable to remove item.');
     }
+
+
+
 }

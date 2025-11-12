@@ -39,7 +39,13 @@
 
 									<tr class="text-center">
 										<td class="product-remove">
-											<a href="#"><span class="ion-ios-close"></span></a>
+											<form action="{{ route('cart.remove', $cart->id) }}" method="POST"
+												style="display:inline;">
+												@csrf
+												@method('DELETE')
+												<a href="#" class="remove-item" data-id="{{ $cart->id }}"><span
+														class="ion-ios-close"></span></a>
+											</form>
 										</td>
 
 										<td class="image-prod">
@@ -162,3 +168,20 @@
 
 
 @endsection
+
+<script>
+	$(document).on('click', '.remove-item', function (e) {
+		e.preventDefault();
+		const id = $(this).data('id');
+		const row = $(this).closest('tr');
+
+		$.ajax({
+			url: '/cart/remove/' + id,
+			type: 'DELETE',
+			data: { _token: '{{ csrf_token() }}' },
+			success: function () {
+				row.fadeOut(300, function () { $(this).remove(); });
+			}
+		});
+	});
+</script>

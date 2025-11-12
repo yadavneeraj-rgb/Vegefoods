@@ -97,6 +97,8 @@ Route::post('/user/logout', [WebAuthController::class, 'logout'])->name('user.lo
 
 
 Route::post('/addCart', [CartController::class, 'addToCart'])->name('cart.add');
+Route::delete('/cart/remove/{id}', [App\Http\Controllers\Web\CartController::class, 'remove'])->name('cart.remove');
+
 
 
 
