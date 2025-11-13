@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
+use App\Events\OrderCreated;
+use App\Events\OrderUpdated;
+use App\Events\OrderStatusChanged;
 
 class Orders extends Model
 {
@@ -34,6 +37,29 @@ class Orders extends Model
     protected $casts = [
         'cart_items' => 'array'
     ];
+
+    protected static function booted()
+    {
+        static::created(function ($order) {
+            event(new OrderCreated($order));
+        });
+
+        static::updated(function ($order) {
+            $changes = $order->getChanges();
+            
+            // Broadcast general order update
+            event(new OrderUpdated($order, $changes));
+            
+            // Broadcast specific payment status change if status was updated
+            if ($order->isDirty('payment_status')) {
+                event(new OrderStatusChanged(
+                    $order, 
+                    $order->getOriginal('payment_status'), 
+                    $order->payment_status
+                ));
+            }
+        });
+    }
 
     public function user()
     {

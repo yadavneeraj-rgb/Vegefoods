@@ -21,6 +21,7 @@ use App\Http\Controllers\Web\RazorpayController;
 use App\Http\Controllers\Web\ShopController;
 use App\Http\Controllers\Web\WebAuthController;
 use App\Http\Controllers\Web\WhislistController;
+use App\Http\Controllers\websocketController;
 use Illuminate\Support\Facades\Route;
 
 // Public Routes
@@ -94,14 +95,30 @@ Route::post('/user/login', [WebAuthController::class, 'login'])->name('user.logi
 Route::post('/user/register', [WebAuthController::class, 'register'])->name('user.register');
 Route::post('/user/logout', [WebAuthController::class, 'logout'])->name('user.logout');
 
-
-
 Route::post('/addCart', [CartController::class, 'addToCart'])->name('cart.add');
 Route::delete('/cart/remove/{id}', [App\Http\Controllers\Web\CartController::class, 'remove'])->name('cart.remove');
-
-
-
 
 Route::post('/razorpay/order', [RazorpayController::class, 'createOrder'])->name('razorpay.order');
 Route::post('/razorpay/verify', [RazorpayController::class, 'verifyPayment'])->name('razorpay.verify');
 Route::post('/checkout/save-address', [CheckoutController::class, 'saveAddress'])->name('checkout.save-address');
+
+
+Route::get('/check-reverb', function () {
+    $host = '127.0.0.1';
+    $port = 8080;
+    
+    $socket = @fsockopen($host, $port, $errno, $errstr, 5);
+    
+    if ($socket) {
+        fclose($socket);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Reverb server is running on port 8080'
+        ]);
+    } else {
+        return response()->json([
+            'status' => 'error',
+            'message' => "Cannot connect to Reverb: $errstr (Code: $errno)"
+        ]);
+    }
+});

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Mail\AdminOrderNotification;
 use Illuminate\Http\Request;
 use Razorpay\Api\Api;
 use Illuminate\Support\Facades\Auth;
@@ -55,7 +56,7 @@ class RazorpayController extends Controller
                 'amount' => $amountInPaise,
                 'currency' => 'INR'
             ]);
- 
+
             // Get user's cart items
             $cartItems = Carts::with('product')->where('user_id', Auth::id())->get();
 
@@ -154,8 +155,8 @@ class RazorpayController extends Controller
             Log::info('Cart cleared for user: ' . Auth::id());
 
             try {
-                Mail::to($order->email)->send(new OrderPlacedMail($order));//to user
-                Mail::to('neeraj95578@gmail.com')->send(new OrderPlacedMail($order)); //to admin
+                Mail::to($order->email)->send(new OrderPlacedMail($order)); // customer mail
+                Mail::to('yadav.neeraj@pearlorganisation.com')->send(new AdminOrderNotification($order));
                 Log::info('Order confirmation emails sent successfully');
             } catch (\Exception $mailError) {
                 Log::error('Email sending failed: ' . $mailError->getMessage());
