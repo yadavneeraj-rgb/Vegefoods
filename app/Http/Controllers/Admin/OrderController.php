@@ -16,5 +16,9 @@ class OrderController extends Controller
 
         // Pass to view
         return view("admin.orders.order", compact("orders"));
+
+        
     }
+
+    
 }
