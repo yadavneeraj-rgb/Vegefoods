@@ -281,7 +281,6 @@
 											</button>
 										</form>
 
-
 										<a href="#"
 											class="btn btn-sm btn-outline-danger d-flex justify-content-center align-items-center mx-1"
 											title="Add to Wishlist" style="width: 35px; height: 35px;">

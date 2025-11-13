@@ -50,7 +50,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/createBanner', [CreateBannerController::class, 'createBanner'])->name('createBanner');
 
     //dashboard route
-    Route::get("/dashboard", [DashboardController::class, 'dashboard'])->name('dashboard');
+    Route::get("/admin/dashboard", [DashboardController::class, 'dashboard'])->name('dashboard');
 
     //module routes
     Route::get('/module', [ModuleController::class, 'module'])->name('module');
@@ -104,3 +104,4 @@ Route::delete('/cart/remove/{id}', [App\Http\Controllers\Web\CartController::cla
 
 Route::post('/razorpay/order', [RazorpayController::class, 'createOrder'])->name('razorpay.order');
 Route::post('/razorpay/verify', [RazorpayController::class, 'verifyPayment'])->name('razorpay.verify');
+Route::post('/checkout/save-address', [CheckoutController::class, 'saveAddress'])->name('checkout.save-address');

@@ -43,8 +43,8 @@
 												style="display:inline;">
 												@csrf
 												@method('DELETE')
-												<a href="#" class="remove-item" data-id="{{ $cart->id }}"><span
-														class="ion-ios-close"></span></a>
+												<button type="submit" class="remove-item" data-id="{{ $cart->id }}"><span
+														class="ion-ios-close"></span></button>
 											</form>
 										</td>
 
@@ -168,20 +168,26 @@
 
 
 @endsection
+@section('scripts')
+	<script>
+		$(document).ready(function () {
+			$(document).on('click', '.remove-item', function (e) {
+				e.preventDefault();
+				const id = $(this).data('id');
+				const row = $(this).closest('tr');
 
-<script>
-	$(document).on('click', '.remove-item', function (e) {
-		e.preventDefault();
-		const id = $(this).data('id');
-		const row = $(this).closest('tr');
-
-		$.ajax({
-			url: '/cart/remove/' + id,
-			type: 'DELETE',
-			data: { _token: '{{ csrf_token() }}' },
-			success: function () {
-				row.fadeOut(300, function () { $(this).remove(); });
-			}
+				$.ajax({
+					url: '/cart/remove/' + id,
+					type: 'DELETE',
+					data: { _token: '{{ csrf_token() }}' },
+					success: function (res) {
+						row.fadeOut(300, function () { $(this).remove(); });
+					},
+					error: function (xhr) {
+						console.log(xhr.responseText);
+					}
+				});
+			});
 		});
-	});
-</script>
+	</script>
+@endsection

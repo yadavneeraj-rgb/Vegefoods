@@ -3,7 +3,6 @@
 @section('content')
 
 
-
 	<div class="hero-wrap hero-bread" style="background-image: url('{{asset('web-assets/images/bg_1.jpg')}}');">
 		<div class="container">
 			<div class="row no-gutters slider-text align-items-center justify-content-center">
@@ -19,34 +18,39 @@
 		<div class="container">
 			<div class="row justify-content-center">
 				<div class="col-xl-7 ftco-animate">
-					<form action="#" class="billing-form">
+					<form id="billingForm" class="billing-form">
+						@csrf
 						<h3 class="mb-4 billing-heading">Billing Details</h3>
 						<div class="row align-items-end">
 							<div class="col-md-6">
 								<div class="form-group">
-									<label for="firstname">Firt Name</label>
-									<input type="text" class="form-control" placeholder="">
+									<label for="first_name">First Name *</label>
+									<input type="text" class="form-control" id="first_name" name="first_name"
+										placeholder="First Name" required
+										value="{{ Auth::user()->name ? explode(' ', Auth::user()->name)[0] : '' }}">
 								</div>
 							</div>
 							<div class="col-md-6">
 								<div class="form-group">
-									<label for="lastname">Last Name</label>
-									<input type="text" class="form-control" placeholder="">
+									<label for="last_name">Last Name *</label>
+									<input type="text" class="form-control" id="last_name" name="last_name"
+										placeholder="Last Name" required
+										value="{{ Auth::user()->name ? (explode(' ', Auth::user()->name)[1] ?? '') : '' }}">
 								</div>
 							</div>
 							<div class="w-100"></div>
 							<div class="col-md-12">
 								<div class="form-group">
-									<label for="country">State / Country</label>
+									<label for="state_city">State / City *</label>
 									<div class="select-wrap">
 										<div class="icon"><span class="ion-ios-arrow-down"></span></div>
-										<select name="" id="" class="form-control">
-											<option value="">France</option>
-											<option value="">Italy</option>
-											<option value="">Philippines</option>
-											<option value="">South Korea</option>
-											<option value="">Hongkong</option>
-											<option value="">Japan</option>
+										<select name="state_city" id="state_city" class="form-control" required>
+											<option value="">Select State/City</option>
+											<option value="Dehradun">Dehradun</option>
+											<option value="Roorkee">Roorkee</option>
+											<option value="Rishikesh">Rishikesh</option>
+											<option value="Delhi">Delhi</option>
+											<option value="Haridwar">Haridwar</option>
 										</select>
 									</div>
 								</div>
@@ -54,43 +58,48 @@
 							<div class="w-100"></div>
 							<div class="col-md-6">
 								<div class="form-group">
-									<label for="streetaddress">Street Address</label>
-									<input type="text" class="form-control" placeholder="House number and street name">
+									<label for="street_address">Street Address *</label>
+									<input type="text" class="form-control" id="street_address" name="street_address"
+										placeholder="House number and street name" required>
 								</div>
 							</div>
 							<div class="col-md-6">
 								<div class="form-group">
-									<input type="text" class="form-control"
+									<label for="apartment_suite">Apartment, Suite, etc. (Optional)</label>
+									<input type="text" class="form-control" id="apartment_suite" name="apartment_suite"
 										placeholder="Appartment, suite, unit etc: (optional)">
 								</div>
 							</div>
 							<div class="w-100"></div>
 							<div class="col-md-6">
 								<div class="form-group">
-									<label for="towncity">Town / City</label>
-									<input type="text" class="form-control" placeholder="">
+									<label for="town_city">Town / City *</label>
+									<input type="text" class="form-control" id="town_city" name="town_city"
+										placeholder="Town / City" required>
 								</div>
 							</div>
 							<div class="col-md-6">
 								<div class="form-group">
-									<label for="postcodezip">Postcode / ZIP *</label>
-									<input type="text" class="form-control" placeholder="">
+									<label for="postcode">Postcode / ZIP *</label>
+									<input type="text" class="form-control" id="postcode" name="postcode"
+										placeholder="Postcode / ZIP" required>
 								</div>
 							</div>
 							<div class="w-100"></div>
 							<div class="col-md-6">
 								<div class="form-group">
-									<label for="phone">Phone</label>
-									<input type="text" class="form-control" placeholder="">
+									<label for="phone">Phone *</label>
+									<input type="text" class="form-control" id="phone" name="phone" placeholder="Phone"
+										required value="{{ Auth::user()->phone ?? '' }}">
 								</div>
 							</div>
 							<div class="col-md-6">
 								<div class="form-group">
-									<label for="emailaddress">Email Address</label>
-									<input type="text" class="form-control" placeholder="">
+									<label for="email">Email Address *</label>
+									<input type="email" class="form-control" id="email" name="email"
+										placeholder="Email Address" required value="{{ Auth::user()->email ?? '' }}">
 								</div>
 							</div>
-
 						</div>
 					</form><!-- END -->
 				</div>
@@ -183,99 +192,183 @@
 
 @endsection
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('placeOrderBtn').onclick = function (e) {
-        e.preventDefault();
+	document.addEventListener('DOMContentLoaded', function () {
+		document.getElementById('placeOrderBtn').onclick = function (e) {
+			e.preventDefault();
 
-        console.log('Button clicked'); // Debug log
+			console.log('Place order button clicked');
 
-        // Ensure user accepted terms
-        if (!document.getElementById('termsCheck').checked) {
-            alert("⚠️ Please accept the terms & conditions before proceeding.");
-            return;
-        }
+			// Validate form
+			const form = document.getElementById('billingForm');
+			if (!form.checkValidity()) {
+				alert("⚠️ Please fill all required fields correctly.");
+				form.reportValidity();
+				return;
+			}
 
-        // Proceed with Razorpay
-        const total = "{{ $total }}";
-        console.log('Total:', total); // Debug log
+			// Ensure user accepted terms
+			if (!document.getElementById('termsCheck').checked) {
+				alert("⚠️ Please accept the terms & conditions before proceeding.");
+				return;
+			}
 
-        fetch("{{ route('razorpay.order') }}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": "{{ csrf_token() }}"
-            },
-            body: JSON.stringify({ total: total })
-        })
-        .then(res => {
-            console.log('Response status:', res.status);
-            if (!res.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return res.json();
-        })
-        .then(data => {
-            console.log('Razorpay data:', data); // Debug log
-            
-            if (!data.order_id) {
-                throw new Error('No order ID received');
-            }
+			// Collect all form data
+			const formData = {
+				first_name: document.getElementById('first_name').value,
+				last_name: document.getElementById('last_name').value,
+				state_city: document.getElementById('state_city').value,
+				street_address: document.getElementById('street_address').value,
+				apartment_suite: document.getElementById('apartment_suite').value,
+				town_city: document.getElementById('town_city').value,
+				postcode: document.getElementById('postcode').value,
+				phone: document.getElementById('phone').value,
+				email: document.getElementById('email').value
+			};
 
-            var options = {
-                "key": data.razorpay_key,
-                "amount": data.amount,
-                "currency": "INR",
-                "name": "Neeraj Ecommerce",
-                "description": "Order Payment",
-                "order_id": data.order_id,
-                "handler": function (response) {
-                    console.log('Payment response:', response); // Debug log
-                    
-                    fetch("{{ route('razorpay.verify') }}", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "X-CSRF-TOKEN": "{{ csrf_token() }}"
-                        },
-                        body: JSON.stringify(response)
-                    })
-                    .then(res => res.json())
-                    .then(result => {
-                        console.log('Verification result:', result); // Debug log
-                        if (result.success) {
-                            alert("✅ Payment Successful!");
-                        } else {
-                            alert("❌ Payment Verification Failed: " + result.message);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Verification error:', error);
-                        alert("❌ Verification request failed");
-                    });
-                },
-                "prefill": {
-                    "name": data.name,
-                    "email": data.email,
-                    "contact": data.contact
-                },
-                "theme": {
-                    "color": "#007bff"
-                },
-                "modal": {
-                    "ondismiss": function() {
-                        console.log('Payment modal closed');
-                    }
-                }
-            };
-            
-            var rzp = new Razorpay(options);
-            rzp.open();
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert("❌ Error creating order: " + error.message);
-        });
-    };
-});
+			console.log('Form data collected:', formData);
+
+			// Proceed with Razorpay payment (only send total as before)
+			const total = "{{ $total }}";
+			console.log('Total amount:', total);
+
+			// Show loading state
+			const button = document.getElementById('placeOrderBtn');
+			const originalText = button.innerHTML;
+			button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+			button.disabled = true;
+
+			fetch("{{ route('razorpay.order') }}", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"X-CSRF-TOKEN": "{{ csrf_token() }}",
+					"Accept": "application/json"
+				},
+				body: JSON.stringify({
+					total: total
+				})
+			})
+				.then(res => {
+					console.log('Response status:', res.status);
+
+					if (!res.ok) {
+						return res.text().then(text => {
+							throw new Error(`HTTP ${res.status}: ${text}`);
+						});
+					}
+					return res.json();
+				})
+				.then(data => {
+					console.log('Razorpay response data:', data);
+
+					if (!data.success) {
+						throw new Error(data.message || 'Order creation failed');
+					}
+
+					if (!data.order_id) {
+						throw new Error('No order ID received from server');
+					}
+
+					var options = {
+						"key": data.razorpay_key,
+						"amount": data.amount,
+						"currency": data.currency,
+						"name": "Neeraj Ecommerce",
+						"description": "Order Payment",
+						"order_id": data.order_id,
+						"handler": function (response) {
+							console.log('Payment successful, response:', response);
+
+							// Show processing state
+							button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+
+							// Combine payment response with form data
+							const verificationData = {
+								razorpay_payment_id: response.razorpay_payment_id,
+								razorpay_order_id: response.razorpay_order_id,
+								razorpay_signature: response.razorpay_signature,
+								// Add all form data
+								first_name: formData.first_name,
+								last_name: formData.last_name,
+								state_city: formData.state_city,
+								street_address: formData.street_address,
+								apartment_suite: formData.apartment_suite,
+								town_city: formData.town_city,
+								postcode: formData.postcode,
+								phone: formData.phone,
+								email: formData.email
+							};
+
+							console.log('Sending verification data:', verificationData);
+
+							fetch("{{ route('razorpay.verify') }}", {
+								method: "POST",
+								headers: {
+									"Content-Type": "application/json",
+									"X-CSRF-TOKEN": "{{ csrf_token() }}",
+									"Accept": "application/json"
+								},
+								body: JSON.stringify(verificationData)
+							})
+								.then(verifyRes => {
+									if (!verifyRes.ok) {
+										return verifyRes.text().then(text => {
+											throw new Error(`Verification failed: ${text}`);
+										});
+									}
+									return verifyRes.json();
+								})
+								.then(result => {
+									console.log('Verification result:', result);
+									if (result.success) {
+										alert("✅ Payment Successful! Order #" + result.order_id + " has been created.");
+										// Redirect to success page or home
+										window.location.href = "{{ route('home') }}";
+									} else {
+										alert("❌ Payment Verification Failed: " + result.message);
+										button.innerHTML = originalText;
+										button.disabled = false;
+									}
+								})
+								.catch(error => {
+									console.error('Verification error:', error);
+									alert("❌ Verification request failed: " + error.message);
+									button.innerHTML = originalText;
+									button.disabled = false;
+								});
+						},
+						"prefill": {
+							"name": formData.first_name + ' ' + formData.last_name,
+							"email": formData.email,
+							"contact": formData.phone
+						},
+						"theme": {
+							"color": "#007bff"
+						},
+						"modal": {
+							"ondismiss": function () {
+								console.log('Payment modal closed by user');
+								button.innerHTML = originalText;
+								button.disabled = false;
+							}
+						},
+						"retry": {
+							"enabled": true,
+							"max_count": 3
+						}
+					};
+
+					var rzp = new Razorpay(options);
+					rzp.open();
+				})
+				.catch(error => {
+					console.error('Error creating order:', error);
+					alert("❌ Error creating order: " + error.message);
+					button.innerHTML = originalText;
+					button.disabled = false;
+				});
+		};
+	});
 </script>

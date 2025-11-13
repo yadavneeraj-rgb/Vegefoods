@@ -60,6 +60,4 @@ class CartController extends Controller
         return back()->with('error', 'Unable to remove item.');
     }
 
-
-
 }

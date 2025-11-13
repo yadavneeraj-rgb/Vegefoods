@@ -91,22 +91,28 @@
 
                                 <div class="bottom-area d-flex px-3">
                                     <div class="m-auto d-flex">
+                                        {{-- Quick View --}}
                                         <a href="#"
                                             class="btn btn-sm btn-outline-secondary d-flex justify-content-center align-items-center mx-1"
-                                            title="Quick View">
+                                            title="Quick View" style="width: 35px; height: 35px;">
                                             <span><i class="ion-ios-eye"></i></span>
                                         </a>
-                                        <a href="#"
-                                            class="btn btn-sm btn-primary d-flex justify-content-center align-items-center mx-1 add-to-cart-btn"
-                                            title="Add to Cart" data-product-id="{{ $product->id }}"
-                                            data-product-name="{{ $product->name }}"
-                                            data-product-price="{{ $product->hasPricing() ? $product->pricing->final_price : 0 }}"
-                                            data-product-image="{{ $product->image ? asset('storage/' . $product->image) : asset('web-assets/images/product-1.jpg') }}">
-                                            <span><i class="ion-ios-cart"></i></span>
-                                        </a>
+
+                                        {{-- Add to Cart Form --}}
+                                        <form action="{{ route('cart.add') }}" method="POST" style="display:inline;">
+                                            @csrf
+                                            <input type="hidden" name="product_id" value="{{ $product->id }}">
+                                            <button type="submit"
+                                                class="btn btn-sm btn-primary d-flex justify-content-center align-items-center mx-1"
+                                                title="Add to Cart" style="width: 35px; height: 35px;">
+                                                <i class="ion-ios-cart"></i>
+                                            </button>
+                                        </form>
+
+                                        {{-- Wishlist --}}
                                         <a href="#"
                                             class="btn btn-sm btn-outline-danger d-flex justify-content-center align-items-center mx-1"
-                                            title="Add to Wishlist">
+                                            title="Add to Wishlist" style="width: 35px; height: 35px;">
                                             <span><i class="ion-ios-heart"></i></span>
                                         </a>
                                     </div>
@@ -200,19 +206,6 @@
             z-index: 2;
         }
 
-        .featured-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #ffc107;
-            color: #000;
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 12px;
-            font-weight: bold;
-            z-index: 2;
-        }
-
         .product .text {
             flex: 1;
             display: flex;
@@ -233,69 +226,8 @@
             text-decoration: none;
         }
 
-        .product-description {
-            font-size: 13px;
-            color: #666;
-            line-height: 1.4;
-            margin-bottom: 12px;
-            flex: 1;
-        }
-
-        .pricing {
-            margin-bottom: 15px;
-        }
-
-        .price {
-            margin-bottom: 5px;
-        }
-
-        .price-final {
-            font-size: 18px;
-            font-weight: 700;
-            color: #c49b63;
-        }
-
-        .price-original {
-            font-size: 14px;
-            color: #999;
-            text-decoration: line-through;
-            margin-left: 8px;
-        }
-
-        .tax-info {
-            font-size: 11px;
-            display: block;
-            margin-top: -2px;
-        }
-
-        .savings {
-            font-size: 12px;
-            margin-top: 3px;
-        }
-
-        .savings i {
-            margin-right: 3px;
-        }
-
         .bottom-area {
             margin-top: auto;
-        }
-
-        .add-to-cart-btn {
-            background: #c49b63;
-            border-color: #c49b63;
-            transition: all 0.3s ease;
-        }
-
-        .add-to-cart-btn:hover {
-            background: #b08c5a;
-            border-color: #b08c5a;
-            transform: scale(1.05);
-        }
-
-        .stock-status .badge {
-            font-size: 11px;
-            padding: 4px 8px;
         }
 
         .empty-state {
@@ -326,10 +258,37 @@
             .product-title {
                 font-size: 15px;
             }
+        }
 
-            .price-final {
-                font-size: 16px;
-            }
+        /* Flipkart style pricing */
+        .flipkart-style-pricing {
+            margin: 10px 0;
+        }
+
+        .final-price-flipkart {
+            font-size: 18px;
+            font-weight: 700;
+            color: #c49b63;
+            margin-bottom: 5px;
+        }
+
+        .price-details {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .mrp-flipkart {
+            margin-right: 8px;
+        }
+
+        .discount-flipkart {
+            color: #388e3c;
+            font-weight: 500;
+        }
+
+        .no-price {
+            font-size: 14px;
+            color: #999;
         }
     </style>
 @endpush
@@ -337,66 +296,34 @@
 @push('scripts')
     <script>
         $(document).ready(function () {
-            // Add to cart functionality
-            $('.add-to-cart-btn').on('click', function (e) {
+           
+            $('form[action="{{ route("cart.add") }}"]').on('submit', function(e) {
                 e.preventDefault();
-
-                const productId = $(this).data('product-id');
-                const productName = $(this).data('product-name');
-                const productPrice = $(this).data('product-price');
-                const productImage = $(this).data('product-image');
-
-                // Simple add to cart implementation
-                addToCart(productId, productName, productPrice, productImage);
+                
+                const form = $(this);
+                const button = form.find('button[type="submit"]');
+                const productId = form.find('input[name="product_id"]').val();
+             
+                button.prop('disabled', true).html('<i class="ion-ios-refresh"></i>');
+              
+                $.ajax({
+                    url: form.attr('action'),
+                    method: 'POST',
+                    data: form.serialize(),
+                    success: function(response) {
+                        showToast('Success', response.success || 'Product added to cart!', 'success');
+                        
+                        updateCartCount();
+                    },
+                    error: function(xhr) {
+                        const response = xhr.responseJSON;
+                        showToast('Error', response.message || 'Something went wrong!', 'error');
+                    },
+                    complete: function() {
+                        button.prop('disabled', false).html('<i class="ion-ios-cart"></i>');
+                    }
+                });
             });
-
-            function addToCart(productId, productName, productPrice, productImage) {
-                // Get existing cart from localStorage
-                let cart = JSON.parse(localStorage.getItem('cart')) || [];
-
-                // Check if product already in cart
-                const existingItem = cart.find(item => item.id === productId);
-
-                if (existingItem) {
-                    existingItem.quantity += 1;
-                } else {
-                    cart.push({
-                        id: productId,
-                        name: productName,
-                        price: productPrice,
-                        image: productImage,
-                        quantity: 1
-                    });
-                }
-
-                // Save back to localStorage
-                localStorage.setItem('cart', JSON.stringify(cart));
-
-                // Update cart count in header (if you have one)
-                updateCartCount();
-
-                // Show success message
-                showToast('Success', `${productName} added to cart!`, 'success');
-            }
-
-            function updateCartCount() {
-                const cart = JSON.parse(localStorage.getItem('cart')) || [];
-                const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-
-                // Update cart count badge (adjust selector based on your layout)
-                $('.cart-count').text(totalItems);
-            }
-
-            function showToast(title, message, type = 'success') {
-                // You can integrate with a toast library or use simple alert
-                alert(`${title}: ${message}`);
-
-                // For better UX, consider using Toastr or similar:
-                // toastr[type](message, title);
-            }
-
-            // Initialize cart count on page load
-            updateCartCount();
         });
     </script>
 @endpush

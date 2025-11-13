@@ -28,4 +28,25 @@ class CheckoutController extends Controller
 
         return view('web.checkout.checkout', compact('carts', 'subtotal', 'delivery', 'discount', 'total'));
     }
+
+    public function saveAddress(Request $request)
+    {
+        $request->validate([
+            'first_name' => 'required',
+            'last_name' => 'required',
+            'state_city' => 'required',
+            'street_address' => 'required',
+            'town_city' => 'required',
+            'postcode' => 'required',
+            'phone' => 'required',
+            'email' => 'required|email'
+        ]);
+
+        // Store in session
+        session([
+            'billing_address' => $request->all()
+        ]);
+
+        return response()->json(['success' => true]);
+    }
 }

@@ -19,7 +19,20 @@ class Orders extends Model
         'currency',
         'payment_status',
         'cart_items',
-        'payment_method' 
+        'payment_method',
+        'first_name',
+        'last_name',
+        'state_city',
+        'street_address',
+        'apartment_suite',
+        'town_city',
+        'postcode',
+        'phone',
+        'email'
+    ];
+
+    protected $casts = [
+        'cart_items' => 'array'
     ];
 
     public function user()

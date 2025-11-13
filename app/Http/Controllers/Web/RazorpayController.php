@@ -25,7 +25,7 @@ class RazorpayController extends Controller
             // Check Razorpay credentials
             $razorpayKey = env('RAZORPAY_KEY');
             $razorpaySecret = env('RAZORPAY_SECRET');
-            
+
             Log::info('Razorpay credentials check', [
                 'key_exists' => !empty($razorpayKey),
                 'secret_exists' => !empty($razorpaySecret)
@@ -34,7 +34,8 @@ class RazorpayController extends Controller
             if (empty($razorpayKey) || empty($razorpaySecret)) {
                 Log::error('Razorpay credentials missing');
                 return response()->json([
-                    'error' => 'Payment gateway not configured properly'
+                    'success' => false,
+                    'message' => 'Payment gateway not configured properly'
                 ], 500);
             }
 
@@ -42,11 +43,14 @@ class RazorpayController extends Controller
 
             // Validate amount (convert to paise)
             $amount = $request->input('total');
-            $amountInPaise = (int)($amount * 100);
-            
+            $amountInPaise = (int) ($amount * 100);
+
             if ($amountInPaise < 100) { // Minimum ₹1
                 Log::error('Amount too low', ['amount' => $amount, 'paise' => $amountInPaise]);
-                return response()->json(['error' => 'Amount must be at least ₹1'], 400);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Amount must be at least ₹1'
+                ], 400);
             }
 
             Log::info('Creating Razorpay order', ['amount' => $amountInPaise]);
@@ -62,7 +66,7 @@ class RazorpayController extends Controller
 
             // Get cart items
             $cartItems = Carts::with('product')->where('user_id', Auth::id())->get();
-            
+
             Log::info('Cart items found', ['count' => $cartItems->count()]);
 
             // Create order in database
@@ -78,10 +82,13 @@ class RazorpayController extends Controller
 
             Log::info('Database order created', ['order_id' => $dbOrder->id]);
 
+            // Return consistent success response
             return response()->json([
+                'success' => true,
                 'order_id' => $order['id'],
                 'razorpay_key' => $razorpayKey,
                 'amount' => $amountInPaise,
+                'currency' => 'INR',
                 'name' => Auth::user()->name ?? 'Guest User',
                 'email' => Auth::user()->email ?? 'guest@example.com',
                 'contact' => Auth::user()->phone ?? '9999999999'
@@ -90,56 +97,108 @@ class RazorpayController extends Controller
         } catch (\Razorpay\Api\Errors\Error $e) {
             Log::error('Razorpay API Error: ' . $e->getMessage());
             return response()->json([
-                'error' => 'Razorpay Error: ' . $e->getMessage()
+                'success' => false,
+                'message' => 'Razorpay Error: ' . $e->getMessage()
             ], 500);
         } catch (\Exception $e) {
             Log::error('Order creation failed: ' . $e->getMessage());
             Log::error('Stack trace: ' . $e->getTraceAsString());
             return response()->json([
-                'error' => 'Order creation failed: ' . $e->getMessage()
+                'success' => false,
+                'message' => 'Order creation failed: ' . $e->getMessage()
             ], 500);
         }
     }
-
-
     public function verifyPayment(Request $request)
     {
+        \Log::info('=== PAYMENT VERIFICATION STARTED ===');
+        \Log::info('Verification request data:', $request->all());
+
         $signature = $request->input('razorpay_signature');
         $paymentId = $request->input('razorpay_payment_id');
         $orderId = $request->input('razorpay_order_id');
 
+        // Get form data from request
+        $formData = [
+            'first_name' => $request->input('first_name'),
+            'last_name' => $request->input('last_name'),
+            'state_city' => $request->input('state_city'),
+            'street_address' => $request->input('street_address'),
+            'apartment_suite' => $request->input('apartment_suite'),
+            'town_city' => $request->input('town_city'),
+            'postcode' => $request->input('postcode'),
+            'phone' => $request->input('phone'),
+            'email' => $request->input('email')
+        ];
+
+        \Log::info('Form data received:', $formData);
+
         $api = new Api(env('RAZORPAY_KEY'), env('RAZORPAY_SECRET'));
 
         try {
+            // Verify payment signature
             $api->utility->verifyPaymentSignature([
                 'razorpay_order_id' => $orderId,
                 'razorpay_payment_id' => $paymentId,
                 'razorpay_signature' => $signature
             ]);
 
-            // Update order record
+            \Log::info('Payment signature verified successfully');
+
+            // Update order record with ALL data
             $order = Orders::where('razorpay_order_id', $orderId)->first();
+
             if ($order) {
-                $order->update([
+                $updateData = [
                     'razorpay_payment_id' => $paymentId,
                     'razorpay_signature' => $signature,
-                    'payment_status' => 'success'
+                    'payment_status' => 'success',
+                    'first_name' => $formData['first_name'] ?? 'Not Provided',
+                    'last_name' => $formData['last_name'] ?? 'Not Provided',
+                    'state_city' => $formData['state_city'] ?? 'Not Provided',
+                    'street_address' => $formData['street_address'] ?? 'Not Provided',
+                    'apartment_suite' => $formData['apartment_suite'] ?? '',
+                    'town_city' => $formData['town_city'] ?? 'Not Provided',
+                    'postcode' => $formData['postcode'] ?? 'Not Provided',
+                    'phone' => $formData['phone'] ?? 'Not Provided',
+                    'email' => $formData['email'] ?? Auth::user()->email ?? 'Not Provided'
+                ];
+
+                $order->update($updateData);
+
+                \Log::info('Order updated successfully with form data', [
+                    'order_id' => $order->id,
+                    'razorpay_order_id' => $orderId,
+                    'form_data_stored' => true
+                ]);
+            } else {
+                \Log::error('Order not found for Razorpay order ID: ' . $orderId);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order not found in our system'
                 ]);
             }
 
             // Clear cart
-            Carts::where('user_id', Auth::id())->delete();
+            $cartItemsDeleted = Carts::where('user_id', Auth::id())->delete();
+            \Log::info('Cart cleared. Items deleted: ' . $cartItemsDeleted);
 
-            return response()->json(['success' => true, 'message' => 'Payment successful!']);
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment successful! Your order has been placed.',
+                'order_id' => $order->id
+            ]);
 
         } catch (\Exception $e) {
             \Log::error('Payment verification error: ' . $e->getMessage());
-            
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+
+            // Mark order as failed
             Orders::where('razorpay_order_id', $orderId)
                 ->update(['payment_status' => 'failed']);
 
             return response()->json([
-                'success' => false, 
+                'success' => false,
                 'message' => 'Payment verification failed: ' . $e->getMessage()
             ]);
         }
