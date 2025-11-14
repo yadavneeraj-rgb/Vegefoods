@@ -29,6 +29,7 @@ class ProductController extends Controller
             'description' => 'nullable|string',
             'search_tag' => 'nullable|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'quantity' => 'required|integer|min:0',
             'mrp_base_price' => 'required|numeric|min:0',
             'tax_percentage' => 'required|numeric|min:0|max:100',
             'discount_type' => 'nullable|in:flat,percentage',
@@ -41,6 +42,7 @@ class ProductController extends Controller
                 'slug' => Str::slug($request->name),
                 'description' => $request->description,
                 'search_tag' => $request->search_tag,
+                'quantity' => $request->quantity,
                 'status' => 1,
                 'is_featured' => $request->is_featured ?? 0,
             ];
@@ -94,6 +96,7 @@ class ProductController extends Controller
             'description' => 'nullable|string',
             'search_tag' => 'nullable|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'quantity' => 'required|integer|min:0',
             'mrp_base_price' => 'required|numeric|min:0',
             'tax_percentage' => 'required|numeric|min:0|max:100',
             'discount_type' => 'nullable|in:flat,percentage',
@@ -108,6 +111,7 @@ class ProductController extends Controller
                 'slug' => Str::slug($request->name),
                 'description' => $request->description,
                 'search_tag' => $request->search_tag,
+                'quantity' => $request->quantity,
                 'is_featured' => $request->is_featured ?? 0,
             ];
 

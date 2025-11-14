@@ -28,10 +28,9 @@ class OrderUpdated implements ShouldBroadcast
             new Channel('orders'),
         ];
     }
-
     public function broadcastAs(): string
     {
-        return 'order.updated';
+        return 'order.updated'; 
     }
 
     public function broadcastWith(): array

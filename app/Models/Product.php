@@ -20,17 +20,20 @@ class Product extends Model
         'image',
         'regular_price',
         'sale_price',
-        'is_featured'
+        'is_featured',
+        'quantity'
     ];
 
     protected $attributes = [
         'status' => 1,
-        'is_featured' => 0
+        'is_featured' => 0,
+        'quantity' => 0
     ];
 
     protected $casts = [
         'status' => 'boolean',
-        'is_featured' => 'boolean'
+        'is_featured' => 'boolean',
+        'quantity' => 'integer'
     ];
 
     public function categories()
@@ -82,6 +85,42 @@ class Product extends Model
     }
 
     /**
+     * Check if product is in stock
+     */
+    public function getInStockAttribute()
+    {
+        return $this->quantity > 0;
+    }
+
+    /**
+     * Get stock status
+     */
+    public function getStockStatusAttribute()
+    {
+        if ($this->quantity > 10) {
+            return 'In Stock';
+        } elseif ($this->quantity > 0) {
+            return 'Low Stock';
+        } else {
+            return 'Out of Stock';
+        }
+    }
+
+    /**
+     * Get stock status badge class
+     */
+    public function getStockStatusBadgeAttribute()
+    {
+        if ($this->quantity > 10) {
+            return 'success';
+        } elseif ($this->quantity > 0) {
+            return 'warning';
+        } else {
+            return 'danger';
+        }
+    }
+
+    /**
      * Scope for featured products
      */
     public function scopeFeatured($query)
@@ -95,5 +134,30 @@ class Product extends Model
     public function scopeActive($query)
     {
         return $query->where('status', true);
+    }
+
+    /**
+     * Scope for in-stock products
+     */
+    public function scopeInStock($query)
+    {
+        return $query->where('quantity', '>', 0);
+    }
+
+    /**
+     * Scope for low stock products
+     */
+    public function scopeLowStock($query, $threshold = 10)
+    {
+        return $query->where('quantity', '>', 0)
+                    ->where('quantity', '<=', $threshold);
+    }
+
+    /**
+     * Scope for out of stock products
+     */
+    public function scopeOutOfStock($query)
+    {
+        return $query->where('quantity', '<=', 0);
     }
 }

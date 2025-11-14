@@ -21,7 +21,6 @@ class HomeController extends Controller
             // session()->forget('module_id');
             session(['module_id' => $request->moduleId]);
 
-
             $categories = $catQuery->where("module_id", $request->moduleId)->where('parent_id', 0)
                 ->where('status', 1)
                 ->take(4)
@@ -29,13 +28,18 @@ class HomeController extends Controller
 
             $featuredProducts = $productQuery->whereHas('categories', function ($q) use ($request) {
                 $q->where('module_id', $request->moduleId);
-            })->with('categories')->get();
+            })
+                ->with('pricing')
+                ->where('status', 1)
+                ->take(8)
+                ->get();
 
         } else {
             $categories = Category::where('parent_id', 0)
                 ->where('status', 1)
                 ->take(4)
                 ->get();
+
             $featuredProducts = Product::with('pricing')
                 ->where('is_featured', true)
                 ->where('status', 1)
@@ -46,5 +50,4 @@ class HomeController extends Controller
 
         return view('web.home', compact('categories', 'featuredProducts', 'modules'));
     }
-
 }

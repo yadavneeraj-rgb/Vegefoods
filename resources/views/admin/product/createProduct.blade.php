@@ -26,6 +26,14 @@
         <div class="error-div"><span class="text-danger" id="image-error"></span></div>
     </div>
 
+    <!-- Quantity Field -->
+    <div class="form-group mb-3">
+        <label for="quantity" class="form-label">Quantity</label>
+        <input type="number" name="quantity" id="quantity" class="form-control" 
+            placeholder="Enter available quantity" min="0" required>
+        <small class="text-muted">Number of items available in stock</small>
+    </div>
+
     <!-- Pricing Section -->
     <div class="card mb-3">
         <div class="card-header">
@@ -161,11 +169,17 @@
             e.preventDefault();
 
             var name = $('#product_name').val();
+            var quantity = $('#quantity').val();
             var submitBtn = $('#submitBtn');
 
             // Basic validation
             if (name.trim() === '') {
                 $('#productForm .error-div span').text('Product name is required');
+                return false;
+            }
+
+            if (quantity < 0) {
+                showToast('error', 'Quantity cannot be negative');
                 return false;
             }
 
@@ -204,6 +218,9 @@
                         }
                         if (errors.image) {
                             $('#image-error').text(errors.image[0]);
+                        }
+                        if (errors.quantity) {
+                            showToast('error', errors.quantity[0]);
                         }
                         if (errors.mrp_base_price) {
                             showToast('error', errors.mrp_base_price[0]);

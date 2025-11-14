@@ -15,9 +15,7 @@ use App\Mail\OrderPlacedMail;
 
 class RazorpayController extends Controller
 {
-    /**
-     * Create Razorpay order and local DB entry
-     */
+    
     public function createOrder(Request $request)
     {
         Log::info('Razorpay order creation started', ['user_id' => Auth::id(), 'total' => $request->total]);
@@ -60,7 +58,7 @@ class RazorpayController extends Controller
             // Get user's cart items
             $cartItems = Carts::with('product')->where('user_id', Auth::id())->get();
 
-            // Create order in DB
+            // In createOrder method - ensure this part exists
             $dbOrder = Orders::create([
                 'user_id' => Auth::id(),
                 'razorpay_order_id' => $order['id'],
@@ -69,8 +67,11 @@ class RazorpayController extends Controller
                 'cart_items' => $cartItems->toJson(),
                 'payment_status' => 'pending',
                 'payment_method' => 'razorpay',
+                // Add basic customer data
+                'first_name' => Auth::user()->name ? explode(' ', Auth::user()->name)[0] : 'Customer',
+                'last_name' => Auth::user()->name ? (explode(' ', Auth::user()->name)[1] ?? '') : '',
+                'email' => Auth::user()->email ?? 'customer@example.com',
             ]);
-
             Log::info('Database order created', ['order_id' => $dbOrder->id]);
 
             return response()->json([
@@ -91,7 +92,6 @@ class RazorpayController extends Controller
             return response()->json(['success' => false, 'message' => 'Order creation failed: ' . $e->getMessage()], 500);
         }
     }
-
     /**
      * Verify Razorpay payment and update order
      */

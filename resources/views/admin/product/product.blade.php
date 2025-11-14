@@ -12,7 +12,7 @@
             </div>
         </div>
     </div>
- 
+
     <div class="row" id="products-table-container">
         <div class="col-12">
             <div class="card">
@@ -27,6 +27,8 @@
                                         <th>Name</th>
                                         <th>Description</th>
                                         <th>Price</th>
+                                        <th>Quantity</th>
+                                        <th>Stock Status</th>
                                         <th>Status</th>
                                         <th>Featured</th>
                                         <th>Created At</th>
@@ -58,7 +60,8 @@
                                                         </div>
                                                         @if($product->pricing->discount_value > 0)
                                                             <div class="text-danger small">
-                                                                {{ $product->pricing->discount_type === 'percentage' ? $product->pricing->discount_value . '%' : '₹' . $product->pricing->discount_value }} off
+                                                                {{ $product->pricing->discount_type === 'percentage' ? $product->pricing->discount_value . '%' : '₹' . $product->pricing->discount_value }}
+                                                                off
                                                             </div>
                                                         @endif
                                                     </div>
@@ -67,15 +70,26 @@
                                                 @endif
                                             </td>
                                             <td>
+                                                <span class="fw-bold {{ $product->quantity == 0 ? 'text-danger' : ($product->quantity <= 10 ? 'text-warning' : 'text-success') }}">
+                                                    {{ $product->quantity }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{{ $product->stock_status_badge }}">
+                                                    {{ $product->stock_status }}
+                                                </span>
+                                            </td>
+                                            <td>
                                                 <span class="badge bg-{{ $product->status ? 'success' : 'danger' }}">
                                                     {{ $product->status ? 'Active' : 'Inactive' }}
                                                 </span>
                                             </td>
                                             <td>
-                                                <button class="btn btn-sm featured-btn {{ $product->is_featured ? 'btn-warning' : 'btn-outline-warning' }}"
-                                                    data-id="{{ $product->id }}" 
-                                                    data-featured="{{ $product->is_featured }}">
-                                                    <i class="mdi {{ $product->is_featured ? 'mdi-star' : 'mdi-star-outline' }}"></i>
+                                                <button
+                                                    class="btn btn-sm featured-btn {{ $product->is_featured ? 'btn-warning' : 'btn-outline-warning' }}"
+                                                    data-id="{{ $product->id }}" data-featured="{{ $product->is_featured }}">
+                                                    <i
+                                                        class="mdi {{ $product->is_featured ? 'mdi-star' : 'mdi-star-outline' }}"></i>
                                                     {{ $product->is_featured ? 'Featured' : 'Make Featured' }}
                                                 </button>
                                             </td>
@@ -144,6 +158,14 @@
                             <div class="error-div"><span class="text-danger" id="edit-image-error"></span></div>
                         </div>
 
+                        <!-- Quantity Field -->
+                        <div class="form-group mb-3">
+                            <label for="edit_quantity" class="form-label">Quantity</label>
+                            <input type="number" name="quantity" id="edit_quantity" class="form-control" 
+                                placeholder="Enter available quantity" min="0" required>
+                            <small class="text-muted">Number of items available in stock</small>
+                        </div>
+
                         <!-- Pricing Section -->
                         <div class="card mb-3">
                             <div class="card-header">
@@ -154,16 +176,18 @@
                                     <div class="col-md-6">
                                         <div class="form-group mb-3">
                                             <label for="edit_mrp_base_price" class="form-label">MRP / Base Price (₹)</label>
-                                            <input type="number" name="mrp_base_price" id="edit_mrp_base_price" class="form-control" 
-                                                placeholder="Enter base price" step="0.01" min="0" required>
+                                            <input type="number" name="mrp_base_price" id="edit_mrp_base_price"
+                                                class="form-control" placeholder="Enter base price" step="0.01" min="0"
+                                                required>
                                             <small class="text-muted">Original price before tax/discount</small>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group mb-3">
                                             <label for="edit_tax_percentage" class="form-label">Tax Percentage (%)</label>
-                                            <input type="number" name="tax_percentage" id="edit_tax_percentage" class="form-control" 
-                                                placeholder="Enter tax percentage" step="0.01" min="0" max="100" required>
+                                            <input type="number" name="tax_percentage" id="edit_tax_percentage"
+                                                class="form-control" placeholder="Enter tax percentage" step="0.01" min="0"
+                                                max="100" required>
                                             <small class="text-muted">GST/VAT percentage</small>
                                         </div>
                                     </div>
@@ -183,9 +207,10 @@
                                     <div class="col-md-6">
                                         <div class="form-group mb-3">
                                             <label for="edit_discount_value" class="form-label">Discount Value</label>
-                                            <input type="number" name="discount_value" id="edit_discount_value" class="form-control" 
-                                                placeholder="Enter discount value" step="0.01" min="0">
-                                            <small class="text-muted" id="edit-discount-hint">Select discount type first</small>
+                                            <input type="number" name="discount_value" id="edit_discount_value"
+                                                class="form-control" placeholder="Enter discount value" step="0.01" min="0">
+                                            <small class="text-muted" id="edit-discount-hint">Select discount type
+                                                first</small>
                                         </div>
                                     </div>
                                 </div>
@@ -203,7 +228,8 @@
 
                         <div class="form-group mb-3">
                             <div class="form-check">
-                                <input type="checkbox" name="is_featured" id="edit_product_featured" class="form-check-input" value="1">
+                                <input type="checkbox" name="is_featured" id="edit_product_featured"
+                                    class="form-check-input" value="1">
                                 <label for="edit_product_featured" class="form-check-label">Featured Product</label>
                             </div>
                         </div>
@@ -235,7 +261,7 @@
                 var productId = $(this).data('id');
                 var isFeatured = $(this).data('featured');
                 var button = $(this);
-                
+
                 $.ajax({
                     url: '/product/' + productId + '/toggle-featured',
                     method: 'POST',
@@ -245,7 +271,7 @@
                     success: function (response) {
                         if (response.success) {
                             showToast('success', response.message);
-                            
+
                             // Update button appearance
                             if (response.is_featured) {
                                 button.removeClass('btn-outline-warning').addClass('btn-warning');
@@ -281,6 +307,7 @@
                         $('#edit_product_name').val(response.name);
                         $('#edit_product_description').val(response.description);
                         $('#edit_product_search_tag').val(response.search_tag);
+                        $('#edit_quantity').val(response.quantity);
                         $('#edit_product_featured').prop('checked', response.is_featured);
                         $('#editProductForm').attr('action', '/product/' + productId);
 
@@ -290,7 +317,7 @@
                             $('#edit_tax_percentage').val(response.pricing.tax_percentage);
                             $('#edit_discount_type').val(response.pricing.discount_type);
                             $('#edit_discount_value').val(response.pricing.discount_value);
-                            
+
                             // Enable discount value if discount type is set
                             if (response.pricing.discount_type) {
                                 $('#edit_discount_value').prop('disabled', false);
@@ -300,7 +327,7 @@
                                     $('#edit-discount-hint').text('Enter percentage discount (e.g., 10 for 10% off)');
                                 }
                             }
-                            
+
                             // Calculate and show price breakdown
                             calculateEditPrice();
                         }
@@ -322,7 +349,7 @@
             });
 
             // Enable/disable discount value in edit modal
-            $('#edit_discount_type').change(function() {
+            $('#edit_discount_type').change(function () {
                 const discountType = $(this).val();
                 const discountValue = $('#edit_discount_value');
                 const discountHint = $('#edit-discount-hint');
@@ -343,7 +370,7 @@
             });
 
             // Calculate price when pricing inputs change in edit modal
-            $('#edit_mrp_base_price, #edit_tax_percentage, #edit_discount_value').on('input', function() {
+            $('#edit_mrp_base_price, #edit_tax_percentage, #edit_discount_value').on('input', function () {
                 calculateEditPrice();
             });
 
@@ -370,11 +397,11 @@
 
                 // Update price breakdown
                 let breakdown = `
-                    MRP: ₹${basePrice.toFixed(2)}<br>
-                    Tax (${taxPercentage}%): ₹${taxAmount.toFixed(2)}<br>
-                    ${discountType ? `Discount: ₹${discountAmount.toFixed(2)}<br>` : ''}
-                    <strong>Final Price: ₹${finalPrice.toFixed(2)}</strong>
-                `;
+                        MRP: ₹${basePrice.toFixed(2)}<br>
+                        Tax (${taxPercentage}%): ₹${taxAmount.toFixed(2)}<br>
+                        ${discountType ? `Discount: ₹${discountAmount.toFixed(2)}<br>` : ''}
+                        <strong>Final Price: ₹${finalPrice.toFixed(2)}</strong>
+                    `;
                 $('#edit-price-breakdown').html(breakdown);
             }
 
@@ -413,6 +440,9 @@
                             }
                             if (errors.image) {
                                 $('#edit-image-error').text(errors.image[0]);
+                            }
+                            if (errors.quantity) {
+                                showToast('error', errors.quantity[0]);
                             }
                             if (errors.mrp_base_price) {
                                 showToast('error', errors.mrp_base_price[0]);

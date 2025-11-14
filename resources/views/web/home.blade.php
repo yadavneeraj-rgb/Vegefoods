@@ -195,7 +195,6 @@
 			</div>
 		</div>
 	</section>
-
 	<section class="ftco-section">
 		<div class="container">
 			<div class="row justify-content-center mb-3 pb-3">
@@ -216,20 +215,36 @@
 									src="{{ $product->image ? asset('storage/' . $product->image) : asset('web-assets/images/product-1.jpg') }}"
 									alt="{{ $product->name }}" style="height: 200px; object-fit: cover;">
 
-								{{-- Discount Badge --}}
-								@if($product->hasPricing() && $product->pricing->discount_value > 0)
+								{{-- Stock Status Badge --}}
+								@if($product->quantity == 0)
+									<span class="status out-of-stock">Out of Stock</span>
+								@elseif($product->quantity <= 10)
+									<span class="status low-stock">Low Stock</span>
+								@elseif($product->hasPricing() && $product->pricing->discount_value > 0)
 									@php
 										$basePrice = $product->pricing->mrp_base_price;
 										$finalPrice = $product->pricing->final_price;
 										$discountPercentage = (($basePrice - $finalPrice) / $basePrice) * 100;
 									@endphp
-									<span class="status">{{ round($discountPercentage) }}% OFF</span>
+									<span class="status discount">{{ round($discountPercentage) }}% OFF</span>
 								@endif
 
 								<div class="overlay"></div>
 							</a>
 							<div class="text py-3 pb-4 px-3 text-center">
 								<h3><a href="#" class="product-title">{{ Str::limit($product->name, 40) }}</a></h3>
+
+								{{-- Stock Quantity --}}
+								<div class="stock-info mb-2">
+									@if($product->quantity == 0)
+										<span class="badge badge-danger">Out of Stock</span>
+									@elseif($product->quantity <= 10)
+										<span class="badge badge-warning">Only {{ $product->quantity }} left</span>
+									@else
+										<span class="badge badge-success">In Stock</span>
+									@endif
+								</div>
+
 								<div class="flipkart-style-pricing">
 									@if($product->hasPricing())
 										@php
@@ -271,16 +286,26 @@
 											<span><i class="ion-ios-eye"></i></span>
 										</a>
 
-										<form action="{{ route('cart.add') }}" method="POST" style="display:inline;">
-											@csrf
-											<input type="hidden" name="product_id" value="{{ $product->id }}">
-											<button type="submit"
-												class="btn btn-sm btn-primary d-flex justify-content-center align-items-center mx-1"
-												title="Add to Cart" style="width: 35px; height: 35px;">
+										{{-- Add to Cart Button --}}
+										@if($product->quantity > 0)
+											<form action="{{ route('cart.add') }}" method="POST" style="display:inline;">
+												@csrf
+												<input type="hidden" name="product_id" value="{{ $product->id }}">
+												<button type="submit"
+													class="btn btn-sm btn-primary d-flex justify-content-center align-items-center mx-1"
+													title="Add to Cart" style="width: 35px; height: 35px;">
+													<i class="ion-ios-cart"></i>
+												</button>
+											</form>
+										@else
+											<button type="button"
+												class="btn btn-sm btn-secondary d-flex justify-content-center align-items-center mx-1"
+												title="Out of Stock" style="width: 35px; height: 35px;" disabled>
 												<i class="ion-ios-cart"></i>
 											</button>
-										</form>
+										@endif
 
+										{{-- Wishlist --}}
 										<a href="#"
 											class="btn btn-sm btn-outline-danger d-flex justify-content-center align-items-center mx-1"
 											title="Add to Wishlist" style="width: 35px; height: 35px;">
@@ -311,7 +336,6 @@
 			@endif
 		</div>
 	</section>
-
 	<section class="ftco-section img" style="background-image: url({{asset('web-assets/images/bg_4.jpg')}});">
 		<div class="container">
 			<div class="row justify-content-start">

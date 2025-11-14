@@ -1,9 +1,9 @@
 @extends('admin.layouts.master')
 @section('title', 'Orders | Neeraj - Ecommerce')
-
 @section('content')
+
     <div class="container mt-4">
-        <h3 class="mb-3">All Orders 
+        <h3 class="mb-3">All Orders
             <span id="orders-count" class="badge bg-primary">{{ $orders->count() }}</span>
             <small class="text-muted" id="connection-status">
                 <span class="badge bg-secondary">Connecting...</span>
@@ -30,9 +30,9 @@
                                         </div>
                                         <div>
                                             <span class="badge order-status-badge 
-                                                @if($order->payment_status == 'success') bg-success
-                                                @elseif($order->payment_status == 'failed') bg-danger
-                                                @else bg-warning text-dark @endif">
+                                                                        @if($order->payment_status == 'success') bg-success
+                                                                        @elseif($order->payment_status == 'failed') bg-danger
+                                                                        @else bg-warning text-dark @endif">
                                                 @if($order->payment_status == 'success') Success
                                                 @elseif($order->payment_status == 'failed') Failed
                                                 @else Pending @endif
@@ -62,11 +62,11 @@
                                             <p><strong>Payment ID:</strong> {{ $order->razorpay_payment_id ?? 'N/A' }}</p>
                                             <p><strong>Payment Method:</strong> {{ ucfirst($order->payment_method) }}</p>
                                             <p><strong>Date:</strong> {{ $order->created_at->format('d M Y, h:i A') }}</p>
-                                            <p><strong>Status:</strong> 
+                                            <p><strong>Status:</strong>
                                                 <span class="badge order-detail-status 
-                                                    @if($order->payment_status == 'success') bg-success
-                                                    @elseif($order->payment_status == 'failed') bg-danger
-                                                    @else bg-warning text-dark @endif">
+                                                                            @if($order->payment_status == 'success') bg-success
+                                                                            @elseif($order->payment_status == 'failed') bg-danger
+                                                                            @else bg-warning text-dark @endif">
                                                     @if($order->payment_status == 'success') Success
                                                     @elseif($order->payment_status == 'failed') Failed
                                                     @else Pending @endif
@@ -85,50 +85,52 @@
         </div>
     </div>
 @endsection
-
 @section('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     console.log('Order page loaded - WebSocket handlers ready');
-    
+
     // Update orders count
     function updateOrdersCount() {
         const ordersCount = document.querySelectorAll('.accordion-item').length;
-        document.getElementById('orders-count').textContent = ordersCount;
+        const countElement = document.getElementById('orders-count');
+        if (countElement) {
+            countElement.textContent = ordersCount;
+        }
     }
-    
-    // Update connection status
-    function updateConnectionStatus(status, message = '') {
+
+    // Update connection status (for WebSocket to call)
+    window.updateConnectionStatus = function (status, message = '') {
         const statusElement = document.getElementById('connection-status');
         if (!statusElement) return;
-        
+
         const statusMap = {
             'connected': { text: 'Live', class: 'bg-success' },
             'error': { text: 'Error', class: 'bg-danger' },
             'disconnected': { text: 'Offline', class: 'bg-warning' },
             'connecting': { text: 'Connecting...', class: 'bg-secondary' }
         };
-        
+
         const statusInfo = statusMap[status] || statusMap['connecting'];
         statusElement.innerHTML = `<span class="badge ${statusInfo.class}">${statusInfo.text}</span>`;
-        
+
         if (message) {
             console.log(`Connection status: ${status} - ${message}`);
         }
-    }
-    
+    };
+
     // Function to add new order to UI
-    window.addOrderToUI = function(order) {
-        console.log('🆕 Adding new order to UI:', order.id);
-        
+    window.addOrderToUI = function (order) {
+        console.log('🆕 Adding new order to UI:', order);
+
         const ordersContainer = document.getElementById('orders-container');
         const noOrdersAlert = ordersContainer.querySelector('.alert-info');
-        
+
         // Remove "no orders" message if it exists
         if (noOrdersAlert) {
             noOrdersAlert.remove();
         }
-        
+
         // Create new order HTML
         const newOrderHtml = `
             <div class="accordion-item" id="order-${order.id}" data-order-id="${order.id}">
@@ -161,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
         `;
-        
+
         // Get or create orders accordion
         let ordersAccordion = document.getElementById('ordersAccordion');
         if (!ordersAccordion) {
@@ -170,27 +172,35 @@ document.addEventListener('DOMContentLoaded', function() {
             ordersAccordion.className = 'accordion';
             ordersContainer.appendChild(ordersAccordion);
         }
-        
+
         // Add new order to the top
         ordersAccordion.insertAdjacentHTML('afterbegin', newOrderHtml);
-        
+
         // Highlight the new order
         const newOrderElement = document.getElementById(`order-${order.id}`);
-        newOrderElement.style.backgroundColor = '#d4edda';
-        setTimeout(() => {
-            newOrderElement.style.backgroundColor = '';
-        }, 3000);
-        
+        if (newOrderElement) {
+            newOrderElement.style.backgroundColor = '#d4edda';
+            setTimeout(() => {
+                newOrderElement.style.backgroundColor = '';
+            }, 3000);
+        }
+
         // Update orders count
         updateOrdersCount();
-        
-        showNotification(`New order #${order.id} from ${order.first_name} ${order.last_name}`, 'success');
+
+        // Show notification
+        if (window.orderWebSocketInstance && window.orderWebSocketInstance.showNotification) {
+            window.orderWebSocketInstance.showNotification(`New order #${order.id} received from ${order.first_name}`, 'success');
+        } else {
+            // Fallback notification
+            showFallbackNotification(`New order #${order.id} received`);
+        }
     };
-    
+
     // Function to update existing order
-    window.updateOrderInUI = function(order) {
+    window.updateOrderInUI = function (order) {
         console.log('📝 Updating order in UI:', order.id);
-        
+
         const orderElement = document.getElementById(`order-${order.id}`);
         if (orderElement) {
             // Update the order amount in the header
@@ -200,21 +210,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 const newText = currentText.replace(/₹[\d,]+\.\d{2}/, `₹${parseFloat(order.amount).toFixed(2)}`);
                 amountElement.textContent = newText;
             }
-            
+
             // Highlight the updated order
             orderElement.style.backgroundColor = '#fff3cd';
             setTimeout(() => {
                 orderElement.style.backgroundColor = '';
             }, 3000);
-            
-            showNotification(`Order #${order.id} updated`, 'info');
+
+            if (window.orderWebSocketInstance && window.orderWebSocketInstance.showNotification) {
+                window.orderWebSocketInstance.showNotification(`Order #${order.id} updated`, 'info');
+            }
         }
     };
-    
+
     // Function to update order status
-    window.updateOrderStatusInUI = function(orderId, newStatus) {
+    window.updateOrderStatusInUI = function (orderId, newStatus) {
         console.log('🔄 Updating order status:', orderId, newStatus);
-        
+
         const orderElement = document.getElementById(`order-${orderId}`);
         if (orderElement) {
             const badges = orderElement.querySelectorAll('.order-status-badge, .order-detail-status');
@@ -222,17 +234,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 badge.className = `badge ${getStatusBadgeClass(newStatus)}`;
                 badge.textContent = getStatusText(newStatus);
             });
-            
+
             // Highlight the status change
             orderElement.style.backgroundColor = '#ffeaa7';
             setTimeout(() => {
                 orderElement.style.backgroundColor = '';
             }, 3000);
-            
-            showNotification(`Order #${orderId} status: ${newStatus}`, 'warning');
+
+            if (window.orderWebSocketInstance && window.orderWebSocketInstance.showNotification) {
+                window.orderWebSocketInstance.showNotification(`Order #${orderId} status: ${newStatus}`, 'warning');
+            }
         }
     };
-    
+
     // Helper functions
     function getStatusBadgeClass(status) {
         const statusClasses = {
@@ -242,7 +256,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         return statusClasses[status] || 'bg-secondary';
     }
-    
+
     function getStatusText(status) {
         const statusTexts = {
             'success': 'Success',
@@ -251,24 +265,17 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         return statusTexts[status] || status;
     }
-    
-    function showNotification(message, type = 'info') {
-        let toastContainer = document.getElementById('toast-container');
-        if (!toastContainer) {
-            toastContainer = document.createElement('div');
-            toastContainer.id = 'toast-container';
-            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
-            toastContainer.style.zIndex = '9999';
-            document.body.appendChild(toastContainer);
-        }
 
+    // Fallback notification function
+    function showFallbackNotification(message) {
+        const toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) return;
+        
         const toastId = 'toast-' + Date.now();
         const toastHtml = `
-            <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0" role="alert">
+            <div id="${toastId}" class="toast align-items-center text-white bg-success border-0" role="alert">
                 <div class="d-flex">
-                    <div class="toast-body">
-                        ${message}
-                    </div>
+                    <div class="toast-body">${message}</div>
                     <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
                 </div>
             </div>
@@ -284,11 +291,11 @@ document.addEventListener('DOMContentLoaded', function() {
             toastElement.remove();
         });
     }
-    
+
     // Initial setup
     updateOrdersCount();
     updateConnectionStatus('connecting');
-    
+
     console.log('✅ Order page WebSocket handlers ready');
 });
 </script>

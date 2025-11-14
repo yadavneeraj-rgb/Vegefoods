@@ -59,6 +59,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/module/{id}', [ModuleController::class, 'update_module'])->name('module.update');
 
 
+    Route::post('/admin/orders/{order}/update-status', [OrderController::class, 'updateStatus'])->name('admin.orders.update-status');
+
     // Category Routes
     Route::get('/category', [CategoryController::class, 'category'])->name('category');
     Route::get('/category/create', [CategoryController::class, 'create'])->name('category.create');
@@ -106,9 +108,9 @@ Route::post('/checkout/save-address', [CheckoutController::class, 'saveAddress']
 Route::get('/check-reverb', function () {
     $host = '127.0.0.1';
     $port = 8080;
-    
+
     $socket = @fsockopen($host, $port, $errno, $errstr, 5);
-    
+
     if ($socket) {
         fclose($socket);
         return response()->json([
@@ -121,4 +123,43 @@ Route::get('/check-reverb', function () {
             'message' => "Cannot connect to Reverb: $errstr (Code: $errno)"
         ]);
     }
+});
+
+
+
+Route::get('/test-reverb', function () {
+    // Get the latest order or create a test one
+    $order = \App\Models\Orders::latest()->first();
+    
+    if (!$order) {
+        // Create a test order if none exists
+        $order = \App\Models\Orders::create([
+            'user_id' => 1,
+            'amount' => 100.00,
+            'payment_status' => 'pending',
+            'first_name' => 'Test',
+            'last_name' => 'User',
+            'email' => 'test@example.com'
+        ]);
+    }
+
+    \Log::info('=== TESTING REVERB BROADCAST ===');
+    
+    // Test 1: Direct event broadcasting
+    event(new \App\Events\OrderCreated($order));
+    \Log::info('✅ OrderCreated event fired');
+    
+    // Test 2: Status change event
+    event(new \App\Events\OrderStatusChanged($order, 'pending', 'success'));
+    \Log::info('✅ OrderStatusChanged event fired');
+    
+    // Test 3: Using broadcast helper
+    broadcast(new \App\Events\OrderUpdated($order, ['test' => 'data']));
+    \Log::info('✅ OrderUpdated event fired');
+
+    return response()->json([
+        'message' => 'Test events fired for order #' . $order->id,
+        'order_id' => $order->id,
+        'events' => ['OrderCreated', 'OrderStatusChanged', 'OrderUpdated']
+    ]);
 });

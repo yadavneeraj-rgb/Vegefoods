@@ -57,16 +57,16 @@
     <script src="{{ asset('admin-assets/js/pages/dashboard-blog.init.js') }}"></script>
     <script src="{{ asset('admin-assets/js/app.js') }}"></script>
     <!-- Your existing scripts -->
-       <!-- Your existing scripts -->
+    <!-- Your existing scripts -->
     <script src="{{ asset('admin-assets/js/app.js') }}"></script>
 
     <!-- WebSocket Scripts - BOTH ARE REQUIRED -->
     <script src="https://cdn.jsdelivr.net/npm/pusher-js@8.4.0/dist/web/pusher.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.0/dist/echo.iife.js"></script>
-        <!-- Your existing scripts -->
+    <!-- Your existing scripts -->
     <script src="{{ asset('admin-assets/js/app.js') }}"></script>
 
-    <!-- OPTIMIZED PURE WEBSOCKET Implementation -->
+    <!-- SELF-CONTAINED REVERB WebSocket Implementation -->
     <script>
         class OrderWebSocket {
             constructor() {
@@ -74,56 +74,82 @@
                     console.log('🔄 WebSocket instance already exists, reusing...');
                     return window.orderWebSocketInstance;
                 }
-                
+
                 this.socket = null;
                 this.connected = false;
                 this.reconnectAttempts = 0;
-                this.maxReconnectAttempts = 5;
+                this.maxReconnectAttempts = 10;
                 this.connectionToastShown = false;
+                this.reconnectDelay = 1000;
+
+                // Reverb configuration
+                this.reverbConfig = {
+                    host: '127.0.0.1',
+                    port: '8080',
+                    key: 'c6qhjhxaztbus7abzwqd',
+                    scheme: 'http'
+                };
+
                 this.connect();
-                
                 window.orderWebSocketInstance = this;
             }
 
             connect() {
-                if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-                    console.log('🔗 WebSocket already connected');
-                    return;
+                if (this.socket) {
+                    // Clean up existing connection
+                    this.socket.onopen = null;
+                    this.socket.onmessage = null;
+                    this.socket.onerror = null;
+                    this.socket.onclose = null;
+                    if (this.socket.readyState === WebSocket.OPEN) {
+                        this.socket.close();
+                    }
                 }
 
                 try {
-                    console.log('🔗 Connecting to Reverb WebSocket...');
-                    
-                    this.socket = new WebSocket('ws://127.0.0.1:8080/app/c6qhjhxaztbus7abzwqd?protocol=7&client=js&version=8.4.0');
-                    
-                    this.socket.onopen = () => {
-                        console.log('✅ SUCCESS: Connected to Reverb!');
+                    const wsUrl = `${this.reverbConfig.scheme}://${this.reverbConfig.host}:${this.reverbConfig.port}/app/${this.reverbConfig.key}?protocol=7&client=js&version=8.4.0`;
+                    console.log('🔗 Connecting to Reverb:', wsUrl);
+
+                    this.socket = new WebSocket(wsUrl);
+
+                    this.socket.onopen = (event) => {
+                        console.log('✅ SUCCESS: Connected to Reverb!', event);
                         this.connected = true;
                         this.reconnectAttempts = 0;
-                        
-                        // Only show connection toast once per session
+                        this.reconnectDelay = 1000;
+
+                        this.updateConnectionStatus('connected', 'Live updates connected');
+
                         if (!this.connectionToastShown) {
-                            showNotification('Real-time orders connected!', 'success');
+                            this.showNotification('Real-time orders connected!', 'success');
                             this.connectionToastShown = true;
                         }
-                        
-                        this.subscribeToOrders();
+
+                        // Small delay before subscribing to ensure connection is ready
+                        setTimeout(() => {
+                            this.subscribeToOrders();
+                        }, 100);
                     };
-                    
+
                     this.socket.onmessage = (event) => {
                         this.handleMessage(event);
                     };
-                    
+
                     this.socket.onerror = (error) => {
                         console.error('❌ WebSocket error:', error);
+                        this.updateConnectionStatus('error', 'Connection error');
                     };
-                    
-                    this.socket.onclose = () => {
-                        console.log('🔌 WebSocket closed');
+
+                    this.socket.onclose = (event) => {
+                        console.log('🔌 WebSocket closed:', event.code, event.reason);
                         this.connected = false;
-                        this.attemptReconnect();
+                        this.updateConnectionStatus('disconnected', `Connection closed: ${event.reason || 'Unknown reason'}`);
+
+                        if (event.code !== 1000) { // Don't reconnect if closed normally
+                            this.attemptReconnect();
+                        }
                     };
-                    
+
                 } catch (error) {
                     console.error('❌ Connection error:', error);
                     this.attemptReconnect();
@@ -140,78 +166,92 @@
                     };
                     this.socket.send(JSON.stringify(subscribeMessage));
                     console.log('✅ Subscribed to orders channel');
+                } else {
+                    console.warn('⚠️ Cannot subscribe - WebSocket not ready');
                 }
             }
 
+            // In your master.blade.php - find this handleMessage function:
             handleMessage(event) {
                 try {
                     const data = JSON.parse(event.data);
-                    console.log('📨 Received WebSocket message:', data);
-                    
-                    // Handle subscription success
-                    if (data.event === 'pusher_internal:subscription_succeeded') {
-                        console.log('✅ Successfully subscribed to orders channel');
-                        return;
+                    console.log('📨 WebSocket Message:', data);
+
+                    switch (data.event) {
+                        case 'pusher:connection_established':
+                            console.log('🔗 Connection established:', data.data);
+                            break;
+
+                        case 'pusher_internal:subscription_succeeded':
+                            console.log('✅ Subscribed to channel:', data.channel);
+                            this.updateConnectionStatus('connected', `Live - ${data.channel} channel`);
+                            break;
+
+                        case 'pusher:ping':
+                            // Respond to ping
+                            this.socket.send(JSON.stringify({ event: 'pusher:pong', data: {} }));
+                            break;
+
+                        // ⚠️ THIS IS THE SECTION TO UPDATE - around lines 175-190:
+                        case 'order.created':
+                            console.log('🆕 ORDER CREATED EVENT:', data);
+                            this.handleNewOrder(data.data || data);
+                            break;
+
+                        case 'order.updated':
+                            console.log('📝 ORDER UPDATED EVENT:', data);
+                            this.handleOrderUpdate(data.data || data);
+                            break;
+
+                        case 'order.status.changed':  // ← ADD/UPDATE THIS LINE
+                            console.log('🔄 STATUS CHANGED EVENT:', data);
+                            this.handleStatusChange(data.data || data);
+                            break;
+
+                        default:
+                            console.log('📨 Other event:', data.event, data);
                     }
-                    
-                    // Handle connection established
-                    if (data.event === 'pusher:connection_established') {
-                        console.log('🔗 WebSocket connection established');
-                        return;
-                    }
-                    
-                    // Handle your custom order events
-                    if (data.event === '.order.created') {
-                        console.log('🆕 New order event received:', data);
-                        this.handleNewOrder(data);
-                    } else if (data.event === '.order.updated') {
-                        console.log('📝 Order update event received:', data);
-                        this.handleOrderUpdate(data);
-                    } else if (data.event === '.order.status.changed') {
-                        console.log('🔄 Status change event received:', data);
-                        this.handleStatusChange(data);
-                    }
-                    
+
                 } catch (error) {
-                    console.log('📨 Raw WebSocket message:', event.data);
+                    console.log('📨 Non-JSON message:', event.data);
                 }
             }
 
             handleNewOrder(eventData) {
-                const order = eventData.order || eventData.data?.order;
-                if (order) {
+                const order = eventData.order;
+                if (order && order.id) {
                     console.log('🆕 Processing new order:', order.id);
-                    showNotification(`New order #${order.id} from ${order.first_name} ${order.last_name}`, 'success');
-                    
-                    // Update UI if we're on orders page
-                    if (typeof addOrderToUI === 'function') {
-                        addOrderToUI(order);
+                    this.showNotification(`New order #${order.id} from ${order.first_name} ${order.last_name}`, 'success');
+
+                    // Call UI update functions if they exist
+                    if (typeof window.addOrderToUI === 'function') {
+                        window.addOrderToUI(order);
                     }
                 }
             }
 
             handleOrderUpdate(eventData) {
-                const order = eventData.order || eventData.data?.order;
-                if (order) {
+                const order = eventData.order;
+                if (order && order.id) {
                     console.log('📝 Processing order update:', order.id);
-                    showNotification(`Order #${order.id} updated`, 'info');
-                    
-                    if (typeof updateOrderInUI === 'function') {
-                        updateOrderInUI(order);
+                    this.showNotification(`Order #${order.id} updated`, 'info');
+
+                    if (typeof window.updateOrderInUI === 'function') {
+                        window.updateOrderInUI(order);
                     }
                 }
             }
 
             handleStatusChange(eventData) {
-                const orderId = eventData.order_id || eventData.data?.order_id;
-                const newStatus = eventData.new_status || eventData.data?.new_status;
-                
+                const orderId = eventData.order_id;
+                const newStatus = eventData.new_status;
+
                 if (orderId && newStatus) {
                     console.log('🔄 Processing status change:', orderId, newStatus);
-                    showNotification(`Order #${orderId} status: ${newStatus}`, 'warning');
-                    
-                    if (typeof updateOrderStatusInUI === 'function') {
-                        updateOrderStatusInUI(orderId, newStatus);
+                    this.showNotification(`Order #${orderId} status: ${newStatus}`, 'warning');
+
+                    if (typeof window.updateOrderStatusInUI === 'function') {
+                        window.updateOrderStatusInUI(orderId, newStatus);
                     }
                 }
             }
@@ -219,49 +259,53 @@
             attemptReconnect() {
                 if (this.reconnectAttempts < this.maxReconnectAttempts) {
                     this.reconnectAttempts++;
-                    console.log(`🔄 Reconnecting... (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-                    setTimeout(() => this.connect(), 2000 * this.reconnectAttempts);
+                    const delay = Math.min(this.reconnectDelay * this.reconnectAttempts, 10000);
+                    console.log(`🔄 Reconnecting in ${delay}ms... (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+
+                    this.updateConnectionStatus('connecting', `Reconnecting... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+
+                    setTimeout(() => {
+                        console.log('🔄 Attempting reconnect...');
+                        this.connect();
+                    }, delay);
                 } else {
                     console.error('❌ Max reconnection attempts reached');
-                    showNotification('Real-time updates disconnected', 'danger');
+                    this.showNotification('Real-time updates disconnected', 'danger');
+                    this.updateConnectionStatus('error', 'Disconnected - please refresh page');
                 }
             }
 
-            disconnect() {
-                if (this.socket) {
-                    this.socket.close();
-                    this.connected = false;
-                    console.log('🔌 WebSocket disconnected manually');
+            updateConnectionStatus(status, message = '') {
+                // Update connection status if the element exists
+                const statusElement = document.getElementById('connection-status');
+                if (statusElement) {
+                    const statusMap = {
+                        'connected': { text: 'Live', class: 'bg-success' },
+                        'error': { text: 'Error', class: 'bg-danger' },
+                        'disconnected': { text: 'Offline', class: 'bg-warning' },
+                        'connecting': { text: 'Connecting...', class: 'bg-secondary' }
+                    };
+
+                    const statusInfo = statusMap[status] || statusMap['connecting'];
+                    statusElement.innerHTML = `<span class="badge ${statusInfo.class}">${statusInfo.text}</span>`;
                 }
-            }
-        }
 
-        // Single notification function with prevention of duplicates
-        let lastNotificationTime = 0;
-        const NOTIFICATION_COOLDOWN = 3000; // 3 seconds
-        
-        function showNotification(message, type = 'info') {
-            const now = Date.now();
-            
-            // Prevent showing the same notification too frequently
-            if (now - lastNotificationTime < NOTIFICATION_COOLDOWN) {
-                console.log('⏳ Skipping duplicate notification');
-                return;
-            }
-            
-            lastNotificationTime = now;
-
-            let toastContainer = document.getElementById('toast-container');
-            if (!toastContainer) {
-                toastContainer = document.createElement('div');
-                toastContainer.id = 'toast-container';
-                toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
-                toastContainer.style.zIndex = '9999';
-                document.body.appendChild(toastContainer);
+                console.log(`🔌 Connection status: ${status} - ${message}`);
             }
 
-            const toastId = 'toast-' + Date.now();
-            const toastHtml = `
+            showNotification(message, type = 'info') {
+                // Create a universal notification function
+                let toastContainer = document.getElementById('toast-container');
+                if (!toastContainer) {
+                    toastContainer = document.createElement('div');
+                    toastContainer.id = 'toast-container';
+                    toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+                    toastContainer.style.zIndex = '9999';
+                    document.body.appendChild(toastContainer);
+                }
+
+                const toastId = 'toast-' + Date.now();
+                const toastHtml = `
                 <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0" role="alert">
                     <div class="d-flex">
                         <div class="toast-body">
@@ -271,31 +315,75 @@
                     </div>
                 </div>
             `;
-            
-            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-            
-            const toastElement = document.getElementById(toastId);
-            const toast = new bootstrap.Toast(toastElement);
-            toast.show();
-            
-            toastElement.addEventListener('hidden.bs.toast', () => {
-                toastElement.remove();
-            });
+
+                toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+
+                const toastElement = document.getElementById(toastId);
+                const toast = new bootstrap.Toast(toastElement);
+                toast.show();
+
+                toastElement.addEventListener('hidden.bs.toast', () => {
+                    toastElement.remove();
+                });
+
+                console.log(`📢 ${type.toUpperCase()}: ${message}`);
+            }
+
+            disconnect() {
+                if (this.socket) {
+                    this.socket.close(1000, 'Manual disconnect');
+                    this.connected = false;
+                    console.log('🔌 WebSocket disconnected manually');
+                }
+            }
         }
 
-        // Initialize only once when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Initializing WebSocket connection...');
-            
-            // Check if already initialized
+        // Initialize WebSocket when page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('🚀 Initializing Reverb WebSocket connection...');
+
+            // Add connection status element if it doesn't exist
+            if (!document.getElementById('connection-status')) {
+                const statusElement = document.createElement('small');
+                statusElement.id = 'connection-status';
+                statusElement.className = 'text-muted ms-2';
+                statusElement.innerHTML = '<span class="badge bg-secondary">Connecting...</span>';
+
+                // Try to find a good place to insert the status
+                const ordersCount = document.querySelector('h3 .badge');
+                if (ordersCount) {
+                    ordersCount.parentNode.insertBefore(statusElement, ordersCount.nextSibling);
+                } else {
+                    // Insert at the end of body if no better place found
+                    document.body.appendChild(statusElement);
+                }
+            }
+
+            // Initialize WebSocket
             if (!window.orderWebSocketInstance) {
                 window.orderWebSocket = new OrderWebSocket();
-            } else {
-                console.log('✅ WebSocket already initialized');
             }
+
+            // Make sure Reverb server is running
+            console.log('💡 Make sure Reverb server is running: php artisan reverb:start');
         });
+
+        // Export for debugging
+        window.debugWebSocket = function () {
+            if (window.orderWebSocketInstance) {
+                console.log('🔍 WebSocket Debug:', {
+                    instance: window.orderWebSocketInstance,
+                    connected: window.orderWebSocketInstance.connected,
+                    socket: window.orderWebSocketInstance.socket,
+                    reconnectAttempts: window.orderWebSocketInstance.reconnectAttempts
+                });
+            } else {
+                console.log('❌ No WebSocket instance found');
+            }
+        };
     </script>
 
     @stack('script')
 </body>
+
 </html>

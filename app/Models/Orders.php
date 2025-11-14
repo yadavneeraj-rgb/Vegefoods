@@ -41,20 +41,30 @@ class Orders extends Model
     protected static function booted()
     {
         static::created(function ($order) {
+            \Log::info('Order created event fired', ['order_id' => $order->id]);
             event(new OrderCreated($order));
         });
 
         static::updated(function ($order) {
             $changes = $order->getChanges();
-            
+            \Log::info('Order updated event fired', [
+                'order_id' => $order->id,
+                'changes' => $changes
+            ]);
+
             // Broadcast general order update
             event(new OrderUpdated($order, $changes));
-            
+
             // Broadcast specific payment status change if status was updated
             if ($order->isDirty('payment_status')) {
+                \Log::info('Payment status changed', [
+                    'order_id' => $order->id,
+                    'from' => $order->getOriginal('payment_status'),
+                    'to' => $order->payment_status
+                ]);
                 event(new OrderStatusChanged(
-                    $order, 
-                    $order->getOriginal('payment_status'), 
+                    $order,
+                    $order->getOriginal('payment_status'),
                     $order->payment_status
                 ));
             }

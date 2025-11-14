@@ -33,7 +33,7 @@ class OrderStatusChanged implements ShouldBroadcast
 
     public function broadcastAs(): string
     {
-        return 'order.status.changed';
+        return 'order.status.changed'; // REMOVED THE DOT PREFIX
     }
 
     public function broadcastWith(): array
